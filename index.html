@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meeting Prep: Sherry Moore — Google DeepMind</title>
+<meta name="description" content="Meeting preparation materials for a discussion with Sherry Moore (Google DeepMind): research dossier, SFT/LoRA/ICL deep dive, and meeting story guide.">
+<style>
+/* ===== Reset & Base ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0b0d12;
+  --bg-elev: #11141b;
+  --bg-elev2: #161a24;
+  --sidebar-bg: #0d1016;
+  --border: #232938;
+  --border-soft: #1b202b;
+  --text: #e6e9ef;
+  --text-muted: #9aa3b2;
+  --text-dim: #6b7382;
+  --accent: #7c9cff;
+  --accent-2: #b07cff;
+  --accent-3: #5ad1a5;
+  --code-bg: #0f1218;
+  --code-text: #d4d9e3;
+  --table-head: #141925;
+  --table-stripe: #11141b;
+  --shadow: 0 8px 32px rgba(0,0,0,0.45);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --sidebar-w: 280px;
+  --maxw: 860px;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Roboto, Helvetica, Arial, sans-serif;
+  --mono: "SF Mono", "JetBrains Mono", "Fira Code", "Cascadia Code", Menlo, Consolas, monospace;
+}
+html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ===== Layout ===== */
+.layout { display: flex; min-height: 100vh; }
+
+/* ===== Sidebar ===== */
+.sidebar {
+  width: var(--sidebar-w);
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  z-index: 50;
+  transition: transform 0.3s ease;
+}
+.sidebar-nav { padding: 20px 16px 60px; }
+.sidebar-header {
+  padding: 8px 8px 20px;
+  border-bottom: 1px solid var(--border-soft);
+  margin-bottom: 16px;
+}
+.sidebar-logo { font-size: 26px; margin-bottom: 6px; }
+.sidebar-title { font-weight: 700; font-size: 16px; color: var(--text); }
+.sidebar-subtitle { font-size: 13px; color: var(--text-muted); }
+.nav-section { margin-bottom: 6px; position: relative; }
+.nav-section-link {
+  display: flex; align-items: center; gap: 9px;
+  padding: 9px 10px; border-radius: var(--radius-sm);
+  color: var(--text-muted); font-weight: 500; font-size: 14px;
+  transition: background 0.15s, color 0.15s;
+}
+.nav-section-link:hover { background: var(--bg-elev); color: var(--text); text-decoration: none; }
+.nav-section-link.active { background: linear-gradient(90deg, rgba(124,156,255,0.16), rgba(124,156,255,0.04)); color: var(--accent); }
+.nav-icon { font-size: 16px; flex-shrink: 0; }
+.nav-text { flex: 1; }
+.nav-toggle {
+  position: absolute; right: 4px; top: 6px;
+  background: none; border: none; color: var(--text-dim);
+  cursor: pointer; font-size: 12px; padding: 4px 6px; border-radius: 4px;
+}
+.nav-toggle:hover { color: var(--text); background: var(--bg-elev); }
+.nav-sublist {
+  list-style: none; margin: 4px 0 10px 26px;
+  border-left: 1px solid var(--border-soft);
+  padding-left: 10px;
+  max-height: 800px; overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.2s;
+}
+.nav-sublist.collapsed { max-height: 0; opacity: 0; }
+.nav-sub { margin: 1px 0; }
+.nav-sub a {
+  display: block; padding: 4px 8px; font-size: 12.5px;
+  color: var(--text-dim); border-radius: 5px;
+  transition: color 0.15s, background 0.15s;
+}
+.nav-sub a:hover { color: var(--text-muted); background: var(--bg-elev); text-decoration: none; }
+.nav-sub.nav-sub3 a { padding-left: 16px; font-size: 12px; }
+.nav-sub a.active { color: var(--accent); font-weight: 600; }
+
+/* ===== Main content ===== */
+.main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  min-width: 0;
+}
+.content { max-width: var(--maxw); margin: 0 auto; padding: 0 32px 120px; }
+
+/* ===== Hero ===== */
+.hero {
+  position: relative; overflow: hidden;
+  padding: 88px 32px 72px;
+  border-bottom: 1px solid var(--border);
+  background: radial-gradient(ellipse at 50% 0%, rgba(124,156,255,0.10), transparent 60%),
+              linear-gradient(180deg, var(--bg-elev), var(--bg));
+}
+.hero-content { position: relative; z-index: 2; max-width: var(--maxw); margin: 0 auto; text-align: center; }
+.hero-emoji { font-size: 52px; margin-bottom: 18px; }
+.hero-title {
+  font-size: clamp(30px, 5vw, 46px); font-weight: 800; letter-spacing: -0.02em;
+  background: linear-gradient(120deg, #fff, #c9d4ff 60%, #d9c9ff);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  margin-bottom: 14px;
+}
+.hero-subtitle { font-size: clamp(15px, 2.5vw, 19px); color: var(--text-muted); margin-bottom: 26px; }
+.hero-meta { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 32px; }
+.hero-badge {
+  font-size: 13px; padding: 6px 14px; border-radius: 999px;
+  background: var(--bg-elev2); border: 1px solid var(--border); color: var(--text-muted);
+}
+.hero-cta {
+  display: inline-block; font-size: 14px; font-weight: 600;
+  padding: 11px 26px; border-radius: 999px;
+  background: linear-gradient(120deg, var(--accent), var(--accent-2));
+  color: #0b0d12 !important; transition: transform 0.15s, box-shadow 0.15s;
+}
+.hero-cta:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(124,156,255,0.35); text-decoration: none; }
+.hero-glow {
+  position: absolute; top: -160px; left: 50%; transform: translateX(-50%);
+  width: 600px; height: 400px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(124,156,255,0.22), transparent 70%);
+  filter: blur(40px); z-index: 1;
+}
+
+/* ===== Sections ===== */
+.section {
+  padding: 48px 0 16px; border-bottom: 1px solid var(--border-soft);
+}
+.section:last-of-type { border-bottom: none; }
+.section-header {
+  display: flex; align-items: center; gap: 14px; margin-bottom: 8px;
+  padding-bottom: 18px; border-bottom: 1px solid var(--border);
+}
+.section-icon { font-size: 30px; }
+.section-title { font-size: 27px; font-weight: 800; letter-spacing: -0.01em; color: var(--text); }
+.section-desc { font-size: 14px; color: var(--text-muted); margin-top: 2px; }
+
+/* Collapsible section */
+.collapse-trigger {
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; user-select: none;
+}
+.collapse-arrow { font-size: 13px; color: var(--text-dim); transition: transform 0.25s; flex-shrink: 0; }
+.collapse-trigger.collapsed .collapse-arrow { transform: rotate(-90deg); }
+.section-body { transition: max-height 0.35s ease, opacity 0.2s; overflow: hidden; }
+.section-body.collapsed { max-height: 0; opacity: 0; }
+
+/* ===== Typography ===== */
+.content h2 {
+  font-size: 23px; font-weight: 750; letter-spacing: -0.01em;
+  margin: 44px 0 16px; padding-top: 12px;
+  color: var(--text); scroll-margin-top: 20px;
+}
+.content h2::before { content: ""; display: block; height: 1px; background: var(--border-soft); margin: -12px 0 18px; }
+.content h3 { font-size: 19px; font-weight: 700; margin: 34px 0 12px; color: #f0f2f7; }
+.content h4 { font-size: 16px; font-weight: 700; margin: 24px 0 10px; color: var(--text); }
+.content p { margin: 12px 0; color: var(--text); }
+.content strong { color: #fff; font-weight: 700; }
+.content em { color: var(--text); }
+.content ul, .content ol { margin: 12px 0; padding-left: 24px; }
+.content li { margin: 6px 0; }
+.content li::marker { color: var(--accent); }
+.content blockquote {
+  margin: 18px 0; padding: 14px 18px; border-left: 3px solid var(--accent);
+  background: var(--bg-elev); border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: var(--text-muted);
+}
+.content blockquote p { margin: 6px 0; color: var(--text-muted); }
+.content hr { border: none; height: 1px; background: var(--border-soft); margin: 36px 0; }
+.content a { color: var(--accent); }
+.content code { font-family: var(--mono); font-size: 0.88em; }
+
+/* ===== Inline code ===== */
+.content :not(pre) > code {
+  background: var(--code-bg); color: var(--accent-3);
+  padding: 2px 6px; border-radius: 5px; font-size: 0.85em;
+  border: 1px solid var(--border-soft);
+}
+
+/* ===== Code blocks ===== */
+.codehilite {
+  position: relative; margin: 18px 0; border-radius: var(--radius);
+  border: 1px solid var(--border); background: var(--code-bg); overflow: hidden;
+}
+.codehilite pre {
+  margin: 0; padding: 18px 20px; overflow-x: auto;
+  font-family: var(--mono); font-size: 13.5px; line-height: 1.65;
+  color: var(--code-text);
+}
+.content pre code { background: none; border: none; padding: 0; color: inherit; font-size: inherit; }
+/* fallback styling for plain code blocks (no codehilite wrapper) */
+.content > pre {
+  margin: 18px 0; padding: 18px 20px; border-radius: var(--radius);
+  border: 1px solid var(--border); background: var(--code-bg);
+  overflow-x: auto; font-family: var(--mono); font-size: 13.5px; line-height: 1.65;
+  color: var(--code-text);
+}
+.content > pre code { background: none; border: none; padding: 0; }
+
+/* ===== Tables ===== */
+.content table {
+  width: 100%; border-collapse: collapse; margin: 20px 0;
+  font-size: 14px; display: block; overflow-x: auto;
+}
+.content thead { background: var(--table-head); }
+.content th {
+  text-align: left; padding: 11px 14px; font-weight: 700; color: var(--text);
+  border-bottom: 2px solid var(--border); white-space: nowrap;
+}
+.content td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border-soft); color: var(--text);
+  vertical-align: top;
+}
+.content tbody tr:nth-child(even) { background: var(--table-stripe); }
+.content tbody tr:hover { background: var(--bg-elev); }
+
+/* ===== Top bar (mobile) ===== */
+.topbar {
+  display: none; position: sticky; top: 0; z-index: 40;
+  height: 54px; padding: 0 16px; align-items: center; justify-content: space-between;
+  background: var(--sidebar-bg); border-bottom: 1px solid var(--border);
+}
+.menu-btn {
+  background: none; border: 1px solid var(--border); color: var(--text);
+  width: 38px; height: 38px; border-radius: var(--radius-sm); font-size: 18px; cursor: pointer;
+}
+.topbar-title { font-weight: 700; font-size: 14px; color: var(--text-muted); }
+
+.overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  z-index: 45; cursor: pointer;
+}
+.overlay.show { display: block; }
+
+/* ===== Back to top ===== */
+.back-top {
+  position: fixed; bottom: 28px; right: 28px; z-index: 60;
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--bg-elev2); border: 1px solid var(--border);
+  color: var(--text); font-size: 18px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s;
+  box-shadow: var(--shadow);
+}
+.back-top.show { opacity: 1; pointer-events: auto; }
+.back-top:hover { transform: translateY(-2px); border-color: var(--accent); color: var(--accent); }
+
+/* ===== Footer ===== */
+.footer {
+  text-align: center; padding: 36px 24px 48px;
+  color: var(--text-dim); font-size: 13px; border-top: 1px solid var(--border-soft);
+}
+.footer a { color: var(--text-muted); }
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; border: 2px solid var(--bg); }
+::-webkit-scrollbar-thumb:hover { background: #303848; }
+.sidebar::-webkit-scrollbar-thumb { border-color: var(--sidebar-bg); }
+
+/* ===== Mobile ===== */
+@media (max-width: 900px) {
+  :root { --sidebar-w: 260px; }
+  .sidebar { transform: translateX(-100%); box-shadow: var(--shadow); }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; }
+  .topbar { display: flex; }
+  .content { padding: 0 20px 100px; }
+  .hero { padding: 56px 20px 48px; }
+  .content h2 { font-size: 21px; }
+  .content h3 { font-size: 17px; }
+}
+
+/* ===== Print ===== */
+@media print {
+  .sidebar, .topbar, .overlay, .back-top, .hero-glow { display: none !important; }
+  .main { margin-left: 0; }
+  .content { max-width: 100%; padding: 0 10px; }
+  .hero { padding: 28px 10px 20px; background: none; border: none; }
+  .hero-title { -webkit-text-fill-color: #000; color: #000; background: none; }
+  .hero-subtitle, .hero-badge { color: #333; }
+  .section-body, .nav-sublist { max-height: none !important; opacity: 1 !important; overflow: visible !important; }
+  .section { break-inside: avoid-page; border: none; }
+  body { background: #fff; color: #000; font-size: 12px; }
+  .content p, .content li, .content td, .content th { color: #000; }
+  .content h2, .content h3, .content strong { color: #000; }
+  .content h2::before { background: #ccc; }
+  .content blockquote { background: #f5f5f5; color: #333; border-left-color: #888; }
+  .content table { font-size: 11px; }
+  .codehilite, .content > pre { background: #f6f8fa; border-color: #ddd; color: #000; }
+  .content :not(pre) > code { background: #f0f0f0; color: #b00; border-color: #ddd; }
+  .footer { border: none; }
+}
+</style>
+</head>
+<body>
+<div class="overlay"></div>
+<div class="topbar">
+  <button class="menu-btn" aria-label="Open navigation">☰</button>
+  <span class="topbar-title">Meeting Prep · Sherry Moore</span>
+  <span style="width:38px"></span>
+</div>
+<div class="layout">
+  <aside class="sidebar"><nav class="sidebar-nav">
+<div class="sidebar-header">
+<div class="sidebar-logo">📋</div>
+<div class="sidebar-title">Meeting Prep</div>
+<div class="sidebar-subtitle">Sherry Moore</div>
+</div>
+<div class="nav-section">
+<a class="nav-section-link" href="#research-dossier" data-section="research-dossier">
+<span class="nav-icon">🗂️</span>
+<span class="nav-text">Research Dossier</span>
+</a>
+<button class="nav-toggle" aria-label="toggle" data-target="research-dossier-sub">▾</button>
+<ul class="nav-sublist" id="research-dossier-sub">
+<li class="nav-sub"><a href="#research-dossier--1-current-role-title">1. Current Role &amp; Title</a></li>
+<li class="nav-sub"><a href="#research-dossier--2-career-trajectory-key-past-roles">2. Career Trajectory &amp; Key Past Roles</a></li>
+<li class="nav-sub"><a href="#research-dossier--3-major-research-contributions-landmark-papers">3. Major Research Contributions &amp; Landmark Papers</a></li>
+<li class="nav-sub nav-sub3"><a href="#research-dossier--a-tensorflow-co-developer-20152016-flagship-contribution">(a) TensorFlow — co-developer (2015–2016) ⭐ flagship contribution</a></li>
+<li class="nav-sub nav-sub3"><a href="#research-dossier--b-large-scale-evolution-of-image-classifiers-icml-2017">(b) Large-Scale Evolution of Image Classifiers (ICML 2017)</a></li>
+<li class="nav-sub nav-sub3"><a href="#research-dossier--c-open-x-embodiment-robotic-learning-datasets-and-rt-x-models-icra-2024-corl-2023">(c) Open X-Embodiment: Robotic Learning Datasets and RT-X Models (ICRA 2024 / CoRL 2023)</a></li>
+<li class="nav-sub nav-sub3"><a href="#research-dossier--d-robotic-table-tennis-rss-2023-icra-2025">(d) Robotic Table Tennis (RSS 2023 + ICRA 2025)</a></li>
+<li class="nav-sub nav-sub3"><a href="#research-dossier--e-a-comparative-analysis-of-llm-adaptation-sft-lora-and-icl-in-data-scarce-scenarios-2025-most-relevant-to-michu">(e) A Comparative Analysis of LLM Adaptation: SFT, LoRA, and ICL in Data-Scarce Scenarios (2025) ⭐ most relevant to Michu</a></li>
+<li class="nav-sub nav-sub3"><a href="#research-dossier--f-early-systems-work-pre-google">(f) Early systems work (pre-Google)</a></li>
+<li class="nav-sub"><a href="#research-dossier--4-research-focus-areas-themes">4. Research Focus Areas &amp; Themes</a></li>
+<li class="nav-sub"><a href="#research-dossier--5-notable-projects-she-has-led-or-been-part-of">5. Notable Projects She Has Led or Been Part Of</a></li>
+<li class="nav-sub"><a href="#research-dossier--6-public-talks-blog-posts-interviews-keynotes">6. Public Talks, Blog Posts, Interviews, Keynotes</a></li>
+<li class="nav-sub"><a href="#research-dossier--7-educational-background">7. Educational Background</a></li>
+<li class="nav-sub"><a href="#research-dossier--discussion-topics-for-the-meeting-tailored-to-michus-interests">Discussion Topics for the Meeting (tailored to Michu&#x27;s interests)</a></li>
+<li class="nav-sub"><a href="#research-dossier--quick-facts">Quick Facts</a></li>
+</ul>
+</div>
+<div class="nav-section">
+<a class="nav-section-link" href="#sft-lora-icl" data-section="sft-lora-icl">
+<span class="nav-icon">🔬</span>
+<span class="nav-text">SFT vs. LoRA vs. ICL</span>
+</a>
+<button class="nav-toggle" aria-label="toggle" data-target="sft-lora-icl-sub">▾</button>
+<ul class="nav-sublist" id="sft-lora-icl-sub">
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--your-crash-course-to-confidently-discuss-arxiv251100130-with-sherry-moore">Your crash course to confidently discuss arXiv:2511.00130 with Sherry Moore</a></li>
+<li class="nav-sub"><a href="#sft-lora-icl--11-what-is-llm-adaptation">1.1 What is &quot;LLM Adaptation&quot;?</a></li>
+<li class="nav-sub"><a href="#sft-lora-icl--12-catastrophic-forgetting-the-central-villain">1.2 Catastrophic Forgetting — The Central Villain</a></li>
+<li class="nav-sub"><a href="#sft-lora-icl--13-supervised-fine-tuning-sft-the-aggressive-approach">1.3 Supervised Fine-Tuning (SFT) — The Aggressive Approach</a></li>
+<li class="nav-sub"><a href="#sft-lora-icl--14-lora-low-rank-adaptation-the-surgical-approach">1.4 LoRA (Low-Rank Adaptation) — The Surgical Approach</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--the-core-idea">The Core Idea</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--why-low-rank-works">Why Low-Rank Works</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--loras-hyperparameters-in-this-paper">LoRA&#x27;s Hyperparameters in This Paper</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--the-lora-learns-less-and-forgets-less-view">The &quot;LoRA Learns Less and Forgets Less&quot; View</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--the-illusion-of-equivalence-finding">The &quot;Illusion of Equivalence&quot; Finding</a></li>
+<li class="nav-sub"><a href="#sft-lora-icl--15-in-context-learning-icl-the-no-update-approach">1.5 In-Context Learning (ICL) — The No-Update Approach</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--chain-of-thought-cot-prompting">Chain-of-Thought (CoT) Prompting</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--many-shot-icl">Many-Shot ICL</a></li>
+<li class="nav-sub"><a href="#sft-lora-icl--16-skill-vs-knowledge-the-papers-key-distinction">1.6 Skill vs. Knowledge — The Paper&#x27;s Key Distinction</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--skill-based-tasks">Skill-Based Tasks</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--knowledge-based-tasks">Knowledge-Based Tasks</a></li>
+<li class="nav-sub"><a href="#sft-lora-icl--17-weight-deltas-δw-the-papers-key-analytical-tool">1.7 Weight Deltas (ΔW) — The Paper&#x27;s Key Analytical Tool</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--what-is-δw">What is ΔW?</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--why-analyze-δw">Why Analyze ΔW?</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--how-the-paper-visualizes-δw">How the Paper Visualizes ΔW</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--what-they-found-preview-detailed-in-part-2">What They Found (Preview — detailed in Part 2)</a></li>
+<li class="nav-sub"><a href="#sft-lora-icl--18-the-base-model-gemma-3-4b">1.8 The Base Model: Gemma 3 (4B)</a></li>
+<li class="nav-sub"><a href="#sft-lora-icl--19-key-concepts-from-prior-work-referenced-in-the-paper">1.9 Key Concepts from Prior Work (Referenced in the Paper)</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--lora-learns-less-and-forgets-less-biderman-et-al-2024">&quot;LoRA learns less and forgets less&quot; (Biderman et al. 2024)</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--illusion-of-equivalence-shuttleworth-et-al-2024">&quot;Illusion of Equivalence&quot; (Shuttleworth et al. 2024)</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--bert-rediscovers-the-classical-nlp-pipeline-tenney-et-al-2019">&quot;BERT rediscovers the classical NLP pipeline&quot; (Tenney et al. 2019)</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--many-shot-icl-agarwal-et-al-2024">Many-Shot ICL (Agarwal et al. 2024)</a></li>
+<li class="nav-sub"><a href="#sft-lora-icl--21-introduction-the-problem-statement">2.1 Introduction — The Problem Statement</a></li>
+<li class="nav-sub"><a href="#sft-lora-icl--22-experimental-setup">2.2 Experimental Setup</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--model">Model</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--data-sizes">Data Sizes</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--training-settings">Training Settings</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--tasks">Tasks</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--measuring-forgetting">Measuring Forgetting</a></li>
+<li class="nav-sub"><a href="#sft-lora-icl--23-results-in-context-learning-icl">2.3 Results: In-Context Learning (ICL)</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--what-they-found">What they found:</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--key-takeaway-for-icl">Key takeaway for ICL:</a></li>
+<li class="nav-sub"><a href="#sft-lora-icl--24-results-supervised-fine-tuning-sft">2.4 Results: Supervised Fine-Tuning (SFT)</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--what-they-found-figure-5">What they found (Figure 5):</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--key-takeaway-for-sft">Key takeaway for SFT:</a></li>
+<li class="nav-sub"><a href="#sft-lora-icl--25-results-lora">2.5 Results: LoRA</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--what-they-found-2">What they found:</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--key-takeaway-for-lora">Key takeaway for LoRA:</a></li>
+<li class="nav-sub"><a href="#sft-lora-icl--26-the-weight-delta-δw-analysis-the-papers-crown-jewel">2.6 The Weight Delta (ΔW) Analysis — The Paper&#x27;s Crown Jewel</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--what-they-did">What They Did</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--finding-1-lora-updates-are-highly-layer-specific">Finding 1: LoRA Updates are Highly Layer-Specific</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--finding-2-rapid-convergence-of-the-update-pattern">Finding 2: Rapid Convergence of the Update Pattern</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--finding-3-module-specific-updates">Finding 3: Module-Specific Updates</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--finding-4-sft-changes-are-10x-larger">Finding 4: SFT Changes are 10x Larger</a></li>
+<li class="nav-sub"><a href="#sft-lora-icl--27-conclusions-the-practical-framework">2.7 Conclusions — The Practical Framework</a></li>
+<li class="nav-sub"><a href="#sft-lora-icl--31-questions-that-show-deep-understanding">3.1 Questions That Show Deep Understanding</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--q1-the-δw-layer-localization-finding">Q1: The ΔW Layer-Localization Finding</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--q2-extension-to-speechmultimodal-models">Q2: Extension to Speech/Multimodal Models</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--q3-lora-forgetting-with-large-data">Q3: LoRA Forgetting with Large Data</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--q4-the-skill-vs-knowledge-framework">Q4: The Skill vs. Knowledge Framework</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--q5-connection-to-her-robotics-work">Q5: Connection to Her Robotics Work</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--q6-the-intruder-dimensions-connection">Q6: The &quot;Intruder Dimensions&quot; Connection</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--q7-pre-training-decisions-and-adaptation">Q7: Pre-training Decisions and Adaptation</a></li>
+<li class="nav-sub"><a href="#sft-lora-icl--32-sharing-your-own-work-natural-conversation-bridges">3.2 Sharing Your Own Work (Natural Conversation Bridges)</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--bridge-1-from-smol-llama-pre-training-and-adaptation">Bridge 1: From smol-llama → Pre-training and Adaptation</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--bridge-2-from-vicharak-llam-deployment-and-efficiency">Bridge 2: From vicharak-llam → Deployment and Efficiency</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--bridge-3-from-pasketti-speech-model-fine-tuning">Bridge 3: From pasketti → Speech Model Fine-Tuning</a></li>
+<li class="nav-sub nav-sub3"><a href="#sft-lora-icl--bridge-4-from-gemma-fork-direct-connection">Bridge 4: From Gemma fork → Direct Connection</a></li>
+<li class="nav-sub"><a href="#sft-lora-icl--33-quick-reference-cheat-sheet">3.3 Quick-Reference Cheat Sheet</a></li>
+</ul>
+</div>
+<div class="nav-section">
+<a class="nav-section-link" href="#meeting-story" data-section="meeting-story">
+<span class="nav-icon">🎭</span>
+<span class="nav-text">Meeting Story Guide</span>
+</a>
+<button class="nav-toggle" aria-label="toggle" data-target="meeting-story-sub">▾</button>
+<ul class="nav-sublist" id="meeting-story-sub">
+<li class="nav-sub"><a href="#meeting-story--the-big-picture-what-this-meeting-actually-is">The Big Picture: What This Meeting Actually Is</a></li>
+<li class="nav-sub"><a href="#meeting-story--the-mindset-shift">The Mindset Shift</a></li>
+<li class="nav-sub"><a href="#meeting-story--the-narrative-arc-not-a-script-a-story-to-tell">The Narrative Arc (Not a Script — a Story to Tell)</a></li>
+<li class="nav-sub nav-sub3"><a href="#meeting-story--act-1-the-introduction-05-min">ACT 1: The Introduction (0–5 min)</a></li>
+<li class="nav-sub nav-sub3"><a href="#meeting-story--act-2-the-work-515-min">ACT 2: The Work (5–15 min)</a></li>
+<li class="nav-sub nav-sub3"><a href="#meeting-story--act-3-the-connection-1523-min">ACT 3: The Connection (15–23 min)</a></li>
+<li class="nav-sub nav-sub3"><a href="#meeting-story--act-4-the-ask-2328-min">ACT 4: The Ask (23–28 min)</a></li>
+<li class="nav-sub nav-sub3"><a href="#meeting-story--the-close-2830-min">The Close (28–30 min)</a></li>
+<li class="nav-sub"><a href="#meeting-story--what-not-to-do">What NOT To Do</a></li>
+<li class="nav-sub"><a href="#meeting-story--after-the-meeting-the-follow-up-strategy">After the Meeting: The Follow-Up Strategy</a></li>
+<li class="nav-sub nav-sub3"><a href="#meeting-story--within-24-hours-aug-13-evening">Within 24 hours (Aug 13 evening):</a></li>
+<li class="nav-sub nav-sub3"><a href="#meeting-story--in-23-weeks-when-you-have-something-concrete">In 2–3 weeks (when you have something concrete):</a></li>
+<li class="nav-sub nav-sub3"><a href="#meeting-story--the-cadence">The cadence:</a></li>
+<li class="nav-sub"><a href="#meeting-story--the-one-sentence-summary">The One-Sentence Summary</a></li>
+</ul>
+</div>
+</nav></aside>
+  <div class="main">
+    
+<div class="hero">
+  <div class="hero-content">
+    <div class="hero-emoji">🤝</div>
+    <h1 class="hero-title">Meeting Prep: Sherry Moore</h1>
+    <p class="hero-subtitle">Google DeepMind &nbsp;·&nbsp; Aug 13, 2026</p>
+    <div class="hero-meta">
+      <span class="hero-badge">🗂️ Research Dossier</span>
+      <span class="hero-badge">🔬 SFT / LoRA / ICL Deep Dive</span>
+      <span class="hero-badge">🎭 Meeting Story Guide</span>
+    </div>
+    <a href="#research-dossier" class="hero-cta">Begin reading ↓</a>
+  </div>
+  <div class="hero-glow"></div>
+</div>
+
+    <div class="content">
+<section class="section section-block" id="research-dossier"><div class="collapse-trigger"><div class="section-header"><span class="section-icon">🗂️</span><div><div class="section-title">Research Dossier</div><div class="section-desc">Sherry Moore&#x27;s career, papers &amp; themes</div></div></div><span class="collapse-arrow">▾</span></div><div class="section-body"><h1 id="research-dossier-sherry-moore-google-brain-google-deepmind">Research Dossier: Sherry Moore (Google Brain / Google DeepMind)</h1>
+<p><em>Prepared for a 30-minute meeting — focus on discussion topics at the intersection of her work and Michu's interests (LLM pre-training, post-training, RL, Speech LLMs, ASR/TTS, LLM inference &amp; deployment).</em></p>
+<hr />
+<h2 id="research-dossier--1-current-role-title">1. Current Role &amp; Title</h2>
+<ul>
+<li><strong>Senior Staff Software Engineer, Google DeepMind</strong> — Robotics team (Robotics@Google DeepMind).</li>
+<li><strong>Leads a team of engineers</strong> at Robotics@Google DeepMind; described as leading "initiatives at the intersection of artificial intelligence and productivity tools to drive the next generation of collaborative intelligence."</li>
+<li>Previously held the same title (Senior Staff Software Engineer) at <strong>Google Brain</strong>, before the Brain↔DeepMind merger.</li>
+<li>Per her personal site (sherryqmoore.com): "I write software and lead a team of talented engineers at Robotics@Google DeepMind."</li>
+<li><strong>Side role</strong>: Certified Professional Co-Active Coach (CPCC) — runs <strong>Sherry Q. Moore, LLC</strong>, specializing in Career Coaching, Leadership Development, and Personal Empowerment. Also co-hosts a "Building the Future: Women in Leadership" event series at Google.</li>
+<li>Google Scholar: ~75,800 citations, h-index 25, i10-index 32 (research areas listed as "Robotics, Machine Learning, Systems").</li>
+<li>GitHub: <a href="https://github.com/sherrym">sherrym</a> — maintains the popular <code>tf-tutorial</code> repo (298 stars).</li>
+</ul>
+<hr />
+<h2 id="research-dossier--2-career-trajectory-key-past-roles">2. Career Trajectory &amp; Key Past Roles</h2>
+<table>
+<thead>
+<tr>
+<th>Period</th>
+<th>Role</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>~1997–2011 (~14 yrs)</td>
+<td><strong>Systems/Kernel Engineer, Sun Microsystems</strong></td>
+<td>Solaris Kernel Development. Firmware &amp; Solaris kernel for both SPARC and x86; bring-up of new hardware platforms; team lead for new kernel services. Platforms ranged from laptops to multi-million-dollar enterprise servers. Blog at blogs.sun.com/sherrym. Named on Sun-era patents (e.g., "Method and system for memory management", US patent app 20110173426).</td>
+</tr>
+<tr>
+<td>Jan 2011 – present (~15+ yrs)</td>
+<td><strong>Engineer, Google</strong> (joined Google, then Google Brain, now Google DeepMind)</td>
+<td>LinkedIn shows continuous tenure since Jan 2011.</td>
+</tr>
+<tr>
+<td>~2011–2013</td>
+<td><strong>Google Ads</strong></td>
+<td>Early Google stint.</td>
+</tr>
+<tr>
+<td>~2013–2014</td>
+<td><strong>Google Fiber</strong></td>
+<td>"Senior member of the Google Fiber team" working on networking — bringing her kernel/systems skillset to ultra high-speed fiber. Spoke at USENIX WIAC 2012 panel on computing careers while on this team.</td>
+</tr>
+<tr>
+<td>~2014–~2023</td>
+<td><strong>Google Brain — Computer Systems for Machine Learning team</strong></td>
+<td>Transitioned into ML systems. Core contributor to TensorFlow from inception (2014–2015). Listed on the Google Brain "Computer Systems for Machine Learning" team page.</td>
+</tr>
+<tr>
+<td>~2023–present</td>
+<td><strong>Google DeepMind — Robotics</strong></td>
+<td>After Brain merged into DeepMind. Now leads an engineering team in Robotics.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Inflection point</strong>: Moved from a 14-year career in OS/kernel engineering into ML systems circa 2014, becoming one of the core TensorFlow developers — a remarkable mid-career pivot from low-level systems work to one of the most impactful ML projects in history.</p>
+<hr />
+<h2 id="research-dossier--3-major-research-contributions-landmark-papers">3. Major Research Contributions &amp; Landmark Papers</h2>
+<h3 id="research-dossier--a-tensorflow-co-developer-20152016-flagship-contribution">(a) TensorFlow — co-developer (2015–2016) ⭐ flagship contribution</h3>
+<ul>
+<li><strong>"TensorFlow: Large-Scale Machine Learning on Heterogeneous Distributed Systems"</strong> (Abadi et al., 2015 whitepaper, arXiv:1603.04467) — the original TensorFlow whitepaper. ~40,000+ citations. Open-sourced Nov 2015; "most forked new repository on GitHub in 2015."</li>
+<li><strong>"TensorFlow: A System for Large-Scale Machine Learning"</strong> (Abadi et al., OSDI 2016, pp. 265–283) — the formal systems paper. She was a <strong>listed speaker at OSDI 2016</strong> for this paper.</li>
+<li>Her specific credited contributions (per Google Research blog posts): <strong>TensorFlow training libraries</strong> (with Jianmin Chen, Matthieu Devin, Sergio Guadarrama) and <strong>Systems Infrastructure</strong> for the Inception image-classifier release (with Martin Wicke, David Andersen, Matthieu Devin, Manjunath Kudlur, Nishant Patil).</li>
+<li>Credited in the announcement of <strong>distributed TensorFlow 0.8</strong> (2016) — the release that added distributed training support.</li>
+</ul>
+<h3 id="research-dossier--b-large-scale-evolution-of-image-classifiers-icml-2017">(b) Large-Scale Evolution of Image Classifiers (ICML 2017)</h3>
+<ul>
+<li><strong>Esteban Real, Sherry Moore, Andrew Selle, Saurabh Saxena, Yutaka Leon Suematsu, Jie Tan, Quoc V. Le, Alexey Kurakin.</strong> ICML 2017.</li>
+<li>Used evolutionary algorithms at unprecedented scale to automatically discover neural network architectures for CIFAR-10 (94.6% / 95.6% ensemble) and CIFAR-100 (77.0%), starting from trivial initial conditions. No human participation once evolution starts. A landmark in <strong>neural architecture search (NAS) / AutoML</strong>. Cited in Google's AutoML blog post as reference [1].</li>
+</ul>
+<h3 id="research-dossier--c-open-x-embodiment-robotic-learning-datasets-and-rt-x-models-icra-2024-corl-2023">(c) Open X-Embodiment: Robotic Learning Datasets and RT-X Models (ICRA 2024 / CoRL 2023)</h3>
+<ul>
+<li>Massive cross-institution collaboration (21 institutions, 22 robot embodiments, 527 skills, 160,266 tasks, 1M+ real robot trajectories). Introduced the <strong>Open X-Embodiment Dataset</strong> (largest open-source real robot dataset) and <strong>RT-1-X / RT-2-X</strong> models showing positive cross-embodiment transfer (RT-1-X outperformed original methods by 50% on average; RT-2-X showed ~3× generalization improvement).</li>
+<li>The "ImageNet for robotics." Open-sourced dataset + model checkpoints.</li>
+<li>Co-author among 300+ (alphabetical author list).</li>
+</ul>
+<h3 id="research-dossier--d-robotic-table-tennis-rss-2023-icra-2025">(d) Robotic Table Tennis (RSS 2023 + ICRA 2025)</h3>
+<ul>
+<li><strong>"Robotic Table Tennis: A Case Study into a High Speed Learning System"</strong> (D'Ambrosio et al., RSS 2023) — deep-dive systems paper on a high-speed learning robot capable of hundreds of table tennis rallies with humans. Covers perception, low-latency control, sim-to-real, and design decisions.</li>
+<li><strong>"Achieving Human Level Competitive Robot Table Tennis"</strong> (D'Ambrosio et al., ICRA 2025, Atlanta) — first learned robot agent to reach amateur human-level competitive table tennis. Won 45% (13/29) of matches vs. unseen humans; 100% vs. beginners, 55% vs. intermediates. Hierarchical/modular policy, zero-shot sim-to-real, real-time opponent adaptation.</li>
+<li><em>Personal note</em>: Sherry posted on LinkedIn that her own playing data was <em>not</em> used to train the model. 🏓</li>
+</ul>
+<h3 id="research-dossier--e-a-comparative-analysis-of-llm-adaptation-sft-lora-and-icl-in-data-scarce-scenarios-2025-most-relevant-to-michu">(e) A Comparative Analysis of LLM Adaptation: SFT, LoRA, and ICL in Data-Scarce Scenarios (2025) ⭐ most relevant to Michu</h3>
+<ul>
+<li><strong>Bernd Bohnet, Rumen Dangovski, Kevin Swersky, Sherry Moore, Arslan Chaudhry, Kathleen Kenealy, Noah Fiedel</strong> (Google DeepMind). arXiv:2511.00130, Oct 2025; submitted to ICLR 2026.</li>
+<li><strong>Systematic comparison of SFT, LoRA, and ICL</strong> in data-scarce regimes using <strong>Gemma 3</strong> as the base model.</li>
+<li><strong>Key findings</strong>:</li>
+<li><strong>LoRA</strong> = best balance: instills new skills with minimal catastrophic forgetting, but needs a critical mass of data (fails with 1–16 samples; effective from ~hundreds).</li>
+<li><strong>SFT</strong> = fastest skill acquisition with fewest examples, but highly susceptible to catastrophic forgetting.</li>
+<li><strong>ICL</strong> = perfectly preserves prior knowledge; good for factual knowledge injection, but struggles with complex skills (e.g., planning).</li>
+<li>Analyzed <strong>weight deltas (ΔW)</strong>: LoRA updates concentrate in upper layers (~layers 20–31), with the update pattern established very early (~800 steps) and remaining stable.</li>
+<li>Practical framework: data extremely limited + new skill → SFT (with caution); moderate data + retention paramount → LoRA; demonstrations of existing capabilities → ICL.</li>
+<li><strong>This is the most directly relevant paper to Michu's interests in post-training / LLM adaptation.</strong></li>
+</ul>
+<h3 id="research-dossier--f-early-systems-work-pre-google">(f) Early systems work (pre-Google)</h3>
+<ul>
+<li><strong>"The effects of network contention on processor allocation strategies"</strong> (Sherry Q. Moore, Lionel M. Ni, IPPS/ICPP 1996) — parallel/distributed systems.</li>
+<li><strong>"Performance evaluation of switch-based wormhole networks"</strong> (Lionel M. Ni, Yadong Gui, Sherry Moore, IEEE TPDS 1997) — interconnection networks.</li>
+<li>These show her deep systems background before pivoting to ML.</li>
+</ul>
+<hr />
+<h2 id="research-dossier--4-research-focus-areas-themes">4. Research Focus Areas &amp; Themes</h2>
+<p>A through-line of <strong>systems thinking applied to learning</strong>:</p>
+<ol>
+<li><strong>ML Systems / Infrastructure</strong> — TensorFlow (distributed, heterogeneous, large-scale ML). Her core identity is as a systems engineer who builds the substrate that ML runs on.</li>
+<li><strong>Robotics &amp; Embodied AI</strong> — cross-embodiment generalist robot policies (RT-X), high-speed physical robotics (table tennis), sim-to-real transfer, hierarchical policies.</li>
+<li><strong>Neural Architecture Search / AutoML</strong> — evolutionary algorithms for automated architecture discovery.</li>
+<li><strong>LLM Adaptation / Post-training</strong> — most recent thread: comparative study of SFT vs. LoRA vs. ICL, catastrophic forgetting, parameter-efficient fine-tuning. (Emerging direction — signals a possible new focus area for her team.)</li>
+<li><strong>Distributed &amp; Parallel Systems</strong> — her roots (network contention, processor allocation, wormhole networks, Solaris kernel).</li>
+</ol>
+<p><strong>Theme</strong>: She consistently works at the <strong>intersection of systems + ML/robotics</strong> — building the systems that make learning work at scale, whether that's a distributed ML framework, a high-speed robot control stack, or a dataset+model ecosystem for cross-embodiment learning.</p>
+<hr />
+<h2 id="research-dossier--5-notable-projects-she-has-led-or-been-part-of">5. Notable Projects She Has Led or Been Part Of</h2>
+<ul>
+<li><strong>TensorFlow</strong> (2014–2016+) — core co-developer; built training libraries and systems infrastructure; presented at OSDI 2016.</li>
+<li><strong>TensorFlow distributed training</strong> (0.8 release, 2016) — distributed computing support.</li>
+<li><strong>Inception image classifier in TensorFlow</strong> — systems infrastructure lead.</li>
+<li><strong>Large-Scale Evolution / AutoML</strong> (2017) — co-author on the evolutionary NAS paper.</li>
+<li><strong>Open X-Embodiment / RT-X</strong> (2023) — co-author on the cross-embodiment robotics dataset + models; open-sourced via google-deepmind/open_x_embodiment.</li>
+<li><strong>Robotic Table Tennis</strong> (2023–2025) — contributor on both the RSS 2023 systems paper and the ICRA 2025 "human-level" paper.</li>
+<li><strong>LLM Adaptation study (SFT/LoRA/ICL)</strong> (2025) — co-author; submitted to ICLR 2026.</li>
+<li><strong>Solaris kernel work</strong> at Sun Microsystems — firmware, kernel bring-up, fast reboot support for OpenSolaris.</li>
+<li><strong>Women in Leadership</strong> event series at Google — co-host/co-organizer.</li>
+</ul>
+<hr />
+<h2 id="research-dossier--6-public-talks-blog-posts-interviews-keynotes">6. Public Talks, Blog Posts, Interviews, Keynotes</h2>
+<ul>
+<li><strong>OSDI 2016</strong> (Savannah, GA) — presented "TensorFlow: A System for Large-Scale Machine Learning" (USENIX). Listed as a speaker/organizer on the USENIX page.</li>
+<li><strong>O'Reilly AI Conference 2017</strong> (San Francisco) — "TensorFlow, machine learning, and learning to learn" (video available on O'Reilly).</li>
+<li><strong>Strata Data Conference 2017</strong> (London) — "The state of TensorFlow and where it is going in 2017."</li>
+<li><strong>O'Reilly AI Conference 2018</strong> (Beijing) — "TensorFlow对科学的影响" (delivered <strong>in Chinese</strong>!).</li>
+<li><strong>TensorFlow Tutorial</strong> — widely viewed tutorial (on Lex Fridman's YouTube channel) covering linear regression and MNIST with TensorFlow; notable teaching style.</li>
+<li><strong>USENIX WIAC 2012</strong> — Panelist, "Strategies for a Successful Career in Computing."</li>
+<li><strong>Silicon Valley Women in Engineering (WiE) 2024 Conference</strong> — speaker/panelist on robotics and career paths.</li>
+<li><strong>60 Minutes</strong> (2023) — briefly featured (one frame at 23:11, and "lifting a 1lb pink weight" — her own words 😄) in a segment on Google/AI.</li>
+<li><strong>Google Research blog posts</strong>: Credited/contributing author on "Announcing TensorFlow 0.8" (2016) and "Train your own image classifier with Inception in TensorFlow" (2016).</li>
+<li><strong>DeepMind blog</strong>: "Scaling up learning across many different robot types" (2023) — Open X-Embodiment announcement.</li>
+<li><strong>LinkedIn presence</strong>: Active; shares robotics work (table tennis), celebrates women in leadership, marks her Google anniversaries.</li>
+</ul>
+<hr />
+<h2 id="research-dossier--7-educational-background">7. Educational Background</h2>
+<ul>
+<li><strong>Graduate work with Prof. Lionel M. Ni</strong> — her two early papers (1996 ICPP, 1997 IEEE TPDS) are co-authored with Lionel M. Ni, a renowned parallel/distributed systems researcher who was affiliated with <strong>Michigan State University</strong> and later <strong>HKUST</strong> (Hong Kong University of Science and Technology). This strongly indicates she completed graduate studies in computer science (parallel/distributed systems) under Ni's supervision in the mid-1990s.</li>
+<li><em>(Note: Exact degree/granting institution not explicitly confirmed in public sources; inferred from co-authorship and publication venues. The 1996 ICPP paper and HKUST repository records support this connection.)</em></li>
+<li><strong>Self-taught / on-the-job systems expertise</strong>: Her 14-year Sun Microsystems tenure (Solaris kernel, firmware, hardware bring-up) represents deep practical systems engineering training beyond formal education.</li>
+<li><strong>Certified Professional Co-Active Coach (CPCC)</strong> — formal coaching certification (separate from her engineering career).</li>
+</ul>
+<hr />
+<h2 id="research-dossier--discussion-topics-for-the-meeting-tailored-to-michus-interests">Discussion Topics for the Meeting (tailored to Michu's interests)</h2>
+<p>Given Michu is a noogler (5 months in) in ML with interests in LLM pre-training, post-training, RL, Speech LLMs, ASR/TTS, and LLM inference/deployment:</p>
+<ol>
+<li><strong>LLM Adaptation paper (her most recent, most relevant work)</strong> — Discuss the SFT vs. LoRA vs. ICL findings, the ΔW layer-localization analysis, and how this informs post-training strategy choices. Ask how this connects to her robotics work (do RT-2 / VLA models face similar adaptation/forgetting trade-offs?).</li>
+<li><strong>From systems to ML — the career pivot</strong> — She went from 14 years of Solaris kernel engineering to co-developing TensorFlow. Ask about that transition, what transferred, and advice for a noogler navigating Google's ML + systems landscape.</li>
+<li><strong>TensorFlow &amp; ML infrastructure lessons</strong> — Given Michu's interest in LLM inference/deployment, ask about the design philosophy behind TensorFlow's distributed/heterogeneous execution and what lessons apply to modern LLM serving (TPUs, accelerators, dataflow graphs vs. today's serving stacks).</li>
+<li><strong>Robotics × LLMs (RT-2 / VLA models)</strong> — RT-2 co-fine-tunes a VLM to output robot actions as text tokens. Ask about the trajectory from RT-X to today's VLA models and where speech/multimodal LLMs fit.</li>
+<li><strong>Sim-to-real &amp; RL</strong> — The table tennis work uses sim-to-real with curriculum and hierarchical RL. Relevant to Michu's RL interest. Ask about the sim-to-real gap, real-time adaptation to unseen opponents, and how this compares to RLHF/RL in LLM post-training.</li>
+<li><strong>Scaling laws / cross-embodiment transfer</strong> — Open X-Embodiment showed positive transfer across robots. Compare to scaling laws in LLM pre-training — are there robotics analogues?</li>
+<li><strong>Women in Leadership / coaching</strong> — She's a CPCC and runs leadership events. As a noogler, asking about mentorship, career development, and her coaching perspective could be a warm, personal topic.</li>
+<li><strong>Building systems for ML at Google</strong> — What does the ML systems org look like now vs. when she built TensorFlow? How should a noogler in ML think about the systems/research boundary?</li>
+</ol>
+<hr />
+<h2 id="research-dossier--quick-facts">Quick Facts</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Full name</td>
+<td>Sherry Qianhong Moore</td>
+</tr>
+<tr>
+<td>Current employer</td>
+<td>Google DeepMind</td>
+</tr>
+<tr>
+<td>Current title</td>
+<td>Senior Staff Software Engineer</td>
+</tr>
+<tr>
+<td>Team</td>
+<td>Robotics</td>
+</tr>
+<tr>
+<td>At Google since</td>
+<td>January 2011 (~15+ years)</td>
+</tr>
+<tr>
+<td>Prior employer</td>
+<td>Sun Microsystems (~14 years)</td>
+</tr>
+<tr>
+<td>GitHub</td>
+<td>github.com/sherrym</td>
+</tr>
+<tr>
+<td>Google Scholar</td>
+<td>scholar.google.com — user nb8wjsoAAAAJ</td>
+</tr>
+<tr>
+<td>Personal site</td>
+<td>sherryqmoore.com (coaching)</td>
+</tr>
+<tr>
+<td>Approx. citations</td>
+<td>~75,800 (Google Scholar)</td>
+</tr>
+<tr>
+<td>h-index</td>
+<td>25</td>
+</tr>
+<tr>
+<td>Languages (talks)</td>
+<td>English, Chinese (gave a talk in Chinese in Beijing 2018)</td>
+</tr>
+<tr>
+<td>Hobbies (per her site)</td>
+<td>Swimming with turtles, volleyball, practicing Italian, cooking</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><em>Sources: Google Scholar, alphaXiv, OpenReview, research.google.com, USENIX, O'Reilly, DeepMind blog, Silicon Valley WiE, sherryqmoore.com, Google Research blog, arXiv, IEEE Xplore, LinkedIn (public posts), Google DeepMind GitHub. Compiled Aug 2026.</em></p></div></section><section class="section section-block" id="sft-lora-icl"><div class="collapse-trigger"><div class="section-header"><span class="section-icon">🔬</span><div><div class="section-title">SFT vs. LoRA vs. ICL</div><div class="section-desc">Deep dive on arXiv:2511.00130</div></div></div><span class="collapse-arrow">▾</span></div><div class="section-body"><h1 id="complete-guide-to-sft-vs-lora-vs-icl-paper">📚 Complete Guide to "SFT vs. LoRA vs. ICL" Paper</h1>
+<h3 id="sft-lora-icl--your-crash-course-to-confidently-discuss-arxiv251100130-with-sherry-moore">Your crash course to confidently discuss arXiv:2511.00130 with Sherry Moore</h3>
+<p><strong>Paper:</strong> "A Comparative Analysis of LLM Adaptation: SFT, LoRA, and ICL in Data-Scarce Scenarios"<br />
+<strong>Authors:</strong> Bernd Bohnet, Rumen Dangovski, Kevin Swersky, <strong>Sherry Moore</strong>, Arslan Chaudhry, Kathleen Kenealy, Noah Fiedel<br />
+<strong>Affiliation:</strong> Google DeepMind | <strong>Date:</strong> Oct 2025 | <strong>Submitted to:</strong> ICLR 2026<br />
+<strong>Base model used:</strong> Gemma 3 (4B)</p>
+<hr />
+<h1 id="part-1-the-fundamentals-everything-you-need-before-the-paper-makes-sense">PART 1: THE FUNDAMENTALS (Everything you need before the paper makes sense)</h1>
+<p>Before diving into the paper, let's make sure you understand every concept it relies on. If you already know some of these, skim them — but don't skip, because I'll connect each concept back to the paper's arguments.</p>
+<hr />
+<h2 id="sft-lora-icl--11-what-is-llm-adaptation">1.1 What is "LLM Adaptation"?</h2>
+<p>A pre-trained LLM (like Gemma 3, Llama, GPT) is a generalist — it's been trained on massive amounts of internet text to predict the next token. But when you want to use it for a specific task (say, tagging parts of speech, or answering medical questions), the model needs to be <strong>adapted</strong>. Adaptation means modifying the model so it becomes better at your specific task.</p>
+<p>There are three main approaches this paper compares:</p>
+<ol>
+<li><strong>SFT (Supervised Fine-Tuning)</strong> — You update ALL the model's weights using labeled examples. It's the most direct approach but also the most aggressive.</li>
+<li><strong>LoRA (Low-Rank Adaptation)</strong> — You freeze the original weights and add tiny "adapter" matrices that learn the task. Much cheaper, much less disruptive.</li>
+<li><strong>ICL (In-Context Learning)</strong> — You don't update any weights at all. You just put examples in the prompt and the model learns from them at inference time.</li>
+</ol>
+<p>The key tension this paper explores: <strong>each method has a different trade-off between learning the new task and remembering what the model already knew.</strong></p>
+<hr />
+<h2 id="sft-lora-icl--12-catastrophic-forgetting-the-central-villain">1.2 Catastrophic Forgetting — The Central Villain</h2>
+<p><strong>Catastrophic forgetting</strong> is when a neural network learns something new and <em>forgets what it previously knew</em>. It's been studied since 1989 (McCloskey &amp; Cohen).</p>
+<p><strong>Intuition:</strong> Imagine you're a skilled chef who can cook 100 dishes. Someone sends you to a 3-day intensive course on making perfect sushi. You come back making incredible sushi — but you've forgotten how to cook 80 of your other dishes. That's catastrophic forgetting.</p>
+<p><strong>Why does it happen?</strong> Neural networks store knowledge in their weights (the numbers that define the model). When you fine-tune on new data, you're <em>overwriting</em> those weights. If you update them too aggressively (high learning rate, many steps), the old knowledge gets erased.</p>
+<p><strong>Why is it called "catastrophic"?</strong> Because it's not gradual. The model doesn't slowly degrade — it can go from perfect to zero on a task in just a few training steps. The paper shows NQ (Natural Questions) accuracy dropping to literally <strong>0%</strong> after just a few steps of SFT on a tagging task.</p>
+<p><strong>This is the #1 problem the paper is trying to understand:</strong> Which adaptation method causes the most forgetting? Which preserves the most knowledge? And why?</p>
+<hr />
+<h2 id="sft-lora-icl--13-supervised-fine-tuning-sft-the-aggressive-approach">1.3 Supervised Fine-Tuning (SFT) — The Aggressive Approach</h2>
+<p><strong>What it is:</strong> You take the pre-trained model and continue training it on your task's labeled data. You update ALL the parameters (every weight in every layer).</p>
+<p><strong>How it works:</strong><br />
+1. Start with pre-trained weights W (the model already knows language)<br />
+2. Feed in your task data (e.g., sentences with POS tags)<br />
+3. Compute loss (how wrong the model's predictions are)<br />
+4. Backpropagate gradients through ALL layers<br />
+5. Update ALL weights: W_new = W_old - learning_rate × gradient</p>
+<p><strong>Pros:</strong><br />
+- Fastest learning — can pick up a new skill with as few as 16 examples<br />
+- Highest peak performance on the target task</p>
+<p><strong>Cons:</strong><br />
+- Catastrophic forgetting — because you're modifying ALL weights, old knowledge gets overwritten<br />
+- Computationally expensive (updating billions of parameters)</p>
+<p><strong>In this paper's experiments:</strong><br />
+- SFT uses learning rates between 10⁻³ and 10⁻⁴<br />
+- Batch size of 8<br />
+- The paper shows SFT causes NQ accuracy to crash to 0 within a few training steps<br />
+- Even lowering the learning rate doesn't fully fix it — lower LR prevents learning the task, but forgetting still happens</p>
+<hr />
+<h2 id="sft-lora-icl--14-lora-low-rank-adaptation-the-surgical-approach">1.4 LoRA (Low-Rank Adaptation) — The Surgical Approach</h2>
+<p>This is the most important concept to understand for this paper. Let me explain it thoroughly.</p>
+<h3 id="sft-lora-icl--the-core-idea">The Core Idea</h3>
+<p>Instead of updating the full weight matrix W (which might be 4096 × 4096 = 16.8M parameters per layer), LoRA <strong>freezes W</strong> and adds a small <em>low-rank</em> update:</p>
+<div class="codehilite"><pre><span></span><code>W_adapted = W_frozen + ΔW
+
+where ΔW = A × B
+
+A: shape (d, r)    — small matrix
+B: shape (r, d)    — small matrix
+r: rank            — much smaller than d (e.g., r=4 instead of d=4096)
+</code></pre></div>
+
+<p><strong>Example with numbers:</strong><br />
+- Original weight matrix W: 4096 × 4096 = 16,777,216 parameters<br />
+- LoRA with rank r=4:<br />
+  - A: 4096 × 4 = 16,384 parameters<br />
+  - B: 4 × 4096 = 16,384 parameters<br />
+  - Total: 32,768 parameters (0.2% of original!)</p>
+<p>So you're training <strong>0.2% of the parameters</strong> instead of 100%.</p>
+<h3 id="sft-lora-icl--why-low-rank-works">Why Low-Rank Works</h3>
+<p>The key insight (from the original LoRA paper, Hu et al. 2022) is that <strong>task-specific adaptations are inherently low-rank</strong> — meaning you don't need to change all 16.8M numbers to learn a new skill. A small number of directions in weight space is sufficient.</p>
+<p><strong>Analogy:</strong> Think of the model as a vast music studio with thousands of knobs. SFT turns ALL the knobs. LoRA only turns a few carefully chosen knobs. The few knobs are enough to change the "sound" (output) for your specific task, but leave the rest of the studio untouched.</p>
+<h3 id="sft-lora-icl--loras-hyperparameters-in-this-paper">LoRA's Hyperparameters in This Paper</h3>
+<ul>
+<li><strong>Rank (r):</strong> Controls how many parameters are trainable. Paper uses r=1, 4, 8, 16, 32. Default is r=4.</li>
+<li>Higher rank = more expressive capacity = faster learning, but more potential for forgetting</li>
+<li>Lower rank = more constrained = slower learning, but less forgetting</li>
+<li><strong>Learning rate:</strong> 0.005 (higher than SFT because fewer parameters need bigger updates)</li>
+<li><strong>Batch size:</strong> 8</li>
+</ul>
+<h3 id="sft-lora-icl--the-lora-learns-less-and-forgets-less-view">The "LoRA Learns Less and Forgets Less" View</h3>
+<p>A prior influential paper (Biderman et al. 2024, "LoRA learns less and forgets less") argued that LoRA's constrained nature inherently prevents forgetting. By restricting updates to a low-rank subspace, LoRA acts as a <strong>regularizer</strong> — it physically cannot make the drastic weight shifts that cause knowledge degradation in SFT.</p>
+<h3 id="sft-lora-icl--the-illusion-of-equivalence-finding">The "Illusion of Equivalence" Finding</h3>
+<p>Another prior paper (Shuttleworth et al. 2024) found something subtle: even when LoRA and SFT achieve identical performance on a target task, they learn <strong>structurally different solutions</strong>:<br />
+- SFT makes small, diffuse changes across ALL weights<br />
+- LoRA introduces <strong>"intruder dimensions"</strong> — new high-ranking singular vectors that are orthogonal to the pre-trained weights</p>
+<p>These intruder dimensions are learned solely from the fine-tuning data and can be brittle. So LoRA isn't just "SFT but smaller" — it's fundamentally different in what it learns.</p>
+<p><strong>This paper builds on these prior findings and adds a new dimension: WHERE in the model the changes happen (the weight delta analysis).</strong></p>
+<hr />
+<h2 id="sft-lora-icl--15-in-context-learning-icl-the-no-update-approach">1.5 In-Context Learning (ICL) — The No-Update Approach</h2>
+<p><strong>What it is:</strong> You don't update any weights. You simply put examples in the model's prompt/context, and the model uses them to figure out the task at inference time.</p>
+<p><strong>Example prompt for POS tagging:</strong></p>
+<div class="codehilite"><pre><span></span><code>Task: Tag each word with its part of speech.
+
+Sentence: The cat sat on the mat
+Tags:    DET NOUN VERB ADP DET NOUN
+
+Sentence: She quickly ran to the store
+Tags:    PRON ADV VERB ADP DET NOUN
+
+Sentence: The dog barked loudly
+Tags:    ???
+</code></pre></div>
+
+<p>The model looks at the examples in the prompt and predicts the tags. No gradient updates, no weight changes.</p>
+<p><strong>Pros:</strong><br />
+- Zero catastrophic forgetting (you never touch the weights!)<br />
+- Instant — no training needed<br />
+- Flexible — change examples, change behavior</p>
+<p><strong>Cons:</strong><br />
+- Limited by context window (you can only fit so many examples)<br />
+- For complex skills (like planning), few examples in context aren't enough — the model simply can't learn<br />
+- Performance on smaller models is often inadequate for hard tasks</p>
+<p><strong>In this paper:</strong><br />
+- ICL uses up to 32K tokens of context (with Gemma 3)<br />
+- 1 to 128 examples in context<br />
+- The paper finds ICL is great for knowledge tasks but bad for complex skills like planning</p>
+<h3 id="sft-lora-icl--chain-of-thought-cot-prompting">Chain-of-Thought (CoT) Prompting</h3>
+<p>A variant of ICL where examples include intermediate reasoning steps. E.g., instead of just showing question→answer, you show question→reasoning→answer. This helps on complex tasks but the paper doesn't focus on CoT — it uses standard ICL.</p>
+<h3 id="sft-lora-icl--many-shot-icl">Many-Shot ICL</h3>
+<p>Recent work (Agarwal et al. 2024) showed that with very long context windows (1M+ tokens), you can put thousands of examples in context — "many-shot ICL" — which can rival SFT on some tasks. But this paper focuses on the "few-shot" regime (up to 128 examples), not many-shot.</p>
+<hr />
+<h2 id="sft-lora-icl--16-skill-vs-knowledge-the-papers-key-distinction">1.6 Skill vs. Knowledge — The Paper's Key Distinction</h2>
+<p>This is a crucial conceptual framework the paper introduces. The paper divides tasks into two categories:</p>
+<h3 id="sft-lora-icl--skill-based-tasks">Skill-Based Tasks</h3>
+<p>Tasks that require the model to <strong>acquire a new capability</strong> — a new way of processing input.</p>
+<p><strong>Examples from the paper:</strong><br />
+- <strong>UPOS</strong> (Universal POS Tagging): Label each word with one of 17 universal grammatical categories (noun, verb, adjective, etc.)<br />
+- <strong>XPOS</strong> (Language-Specific POS Tagging): Fine-grained POS tags with morphological details (tense, case, etc.)<br />
+- <strong>FEATS</strong> (Morphological Feature Prediction): Assign detailed grammatical attributes (tense, number, gender)<br />
+- <strong>LEMMA</strong> (Lemmatization): Reduce inflected words to base form ("running" → "run", "better" → "good")<br />
+- <strong>Head</strong> (Syntactic Head Prediction): For each word, identify its governing word in the dependency tree<br />
+- <strong>ANLI</strong> (Adversarial Natural Language Inference): Determine if one sentence entails/contradicts/neutral another — specifically designed to fool models<br />
+- <strong>Blocksworld</strong>: A planning task — rearrange blocks into a goal configuration (PDDL formulation)<br />
+- <strong>Logistics</strong>: A planning task — transport packages by coordinating trucks and airplanes<br />
+- <strong>WSC</strong> (Winograd Schema Challenge): Coreference resolution requiring common-sense reasoning</p>
+<p><strong>Key property of skills:</strong> The model might have seen similar tasks in pre-training, but they weren't the primary training objective. The model needs to <em>learn how to do the task</em>, not just recall facts.</p>
+<h3 id="sft-lora-icl--knowledge-based-tasks">Knowledge-Based Tasks</h3>
+<p>Tasks that primarily test whether the model <strong>knows specific information</strong>.</p>
+<p><strong>Examples from the paper:</strong><br />
+- <strong>NQ (Natural Questions)</strong>: Real Google Search queries — model must generate answers from its internal knowledge (no context provided). Used as the <strong>reference task</strong> to measure forgetting.<br />
+- <strong>BoolQ</strong>: Yes/no reading comprehension questions<br />
+- <strong>GPQA</strong>: Graduate-level, "Google-proof" multiple-choice questions<br />
+- <strong>GSM8K</strong>: Grade-school math word problems</p>
+<p><strong>Key property of knowledge tasks:</strong> The model either knows the answer or it doesn't. You can't "learn" to know a fact through practice — either the model has the knowledge or it doesn't.</p>
+<p><strong>Why this distinction matters:</strong><br />
+- <strong>Skills</strong> can be learned through SFT and LoRA (they change how the model processes input)<br />
+- <strong>Knowledge</strong> can be injected through ICL (just put the fact in context) but is hard to instill through fine-tuning (and fine-tuning risks <em>erasing</em> existing knowledge)<br />
+- <strong>The paper's central finding:</strong> The best adaptation method depends on whether you're teaching a skill or injecting knowledge</p>
+<hr />
+<h2 id="sft-lora-icl--17-weight-deltas-δw-the-papers-key-analytical-tool">1.7 Weight Deltas (ΔW) — The Paper's Key Analytical Tool</h2>
+<p>This is the most technically interesting part of the paper, so let me explain it carefully.</p>
+<h3 id="sft-lora-icl--what-is-δw">What is ΔW?</h3>
+<p>ΔW (weight delta) = the difference between the fine-tuned model's weights and the original pre-trained model's weights:</p>
+<div class="codehilite"><pre><span></span><code>ΔW = W_finetuned - W_original
+</code></pre></div>
+
+<p>For SFT: ΔW is the full update to all weights (large, diffuse changes)<br />
+For LoRA: ΔW = A × B (the low-rank update, small, concentrated changes)</p>
+<h3 id="sft-lora-icl--why-analyze-δw">Why Analyze ΔW?</h3>
+<p>By looking at WHERE in the model the changes happen (which layers, which modules), you can understand WHY different methods behave differently:<br />
+- If changes are concentrated in upper layers → the method is modifying high-level decision-making<br />
+- If changes are spread across all layers → the method is modifying everything (including low-level features that other tasks depend on → forgetting)<br />
+- If changes are small in magnitude → less disruption to existing knowledge<br />
+- If changes are large → more disruption</p>
+<h3 id="sft-lora-icl--how-the-paper-visualizes-δw">How the Paper Visualizes ΔW</h3>
+<p>They create <strong>heatmaps</strong> (Figure 12 for LoRA, Figure 13 for SFT):<br />
+- <strong>Y-axis:</strong> Model layers (0 to ~31, from bottom to top of the transformer)<br />
+- <strong>X-axis:</strong> Number of training samples (32, 64, 128, 256)<br />
+- <strong>Color:</strong> Magnitude of weight updates (dark blue = small, green/yellow = large)<br />
+- Separate heatmaps for attention weights and MLP weights<br />
+- Multiple heatmaps at different training steps (800, 1600, 3000)</p>
+<h3 id="sft-lora-icl--what-they-found-preview-detailed-in-part-2">What They Found (Preview — detailed in Part 2)</h3>
+<p><strong>LoRA:</strong><br />
+- Changes are <strong>heavily concentrated in upper layers (layers 20-31)</strong><br />
+- Lower layers (0-8) are essentially untouched<br />
+- The pattern is established very early (by step 800) and stays stable<br />
+- This explains why LoRA preserves general knowledge — it doesn't touch the low-level features that other tasks depend on</p>
+<p><strong>SFT:</strong><br />
+- Changes are <strong>&gt;10x larger in magnitude</strong> than LoRA<br />
+- Changes are more spread across layers<br />
+- This explains the severe forgetting — you're rewriting everything</p>
+<hr />
+<h2 id="sft-lora-icl--18-the-base-model-gemma-3-4b">1.8 The Base Model: Gemma 3 (4B)</h2>
+<p>The paper uses <strong>Gemma 3 (4B)</strong> — Google's open-weights model with 4 billion parameters. Key properties relevant to the paper:</p>
+<ul>
+<li><strong>Architecture:</strong> Decoder-only transformer (LLaMA-style)</li>
+<li><strong>Layers:</strong> ~31 layers (inferred from the ΔW analysis showing layers 0-31)</li>
+<li><strong>Normalization:</strong> RMSNorm (relevant — the paper mentions RMSNorm attenuates gradients in early blocks)</li>
+<li><strong>Residual connections:</strong> Present (might mitigate gradient vanishing)</li>
+<li><strong>Context window:</strong> Supports 32K+ tokens (important for ICL experiments)</li>
+</ul>
+<p>The choice of a single 4B model is deliberate — the paper isn't trying to be comprehensive across model sizes. It's a controlled study. The authors acknowledge this limitation.</p>
+<hr />
+<h2 id="sft-lora-icl--19-key-concepts-from-prior-work-referenced-in-the-paper">1.9 Key Concepts from Prior Work (Referenced in the Paper)</h2>
+<h3 id="sft-lora-icl--lora-learns-less-and-forgets-less-biderman-et-al-2024">"LoRA learns less and forgets less" (Biderman et al. 2024)</h3>
+<ul>
+<li>Established that LoRA occupies a different point on the learning-forgetting Pareto curve than SFT</li>
+<li>LoRA: lower target-task performance, higher knowledge retention</li>
+<li>SFT: higher target-task performance, lower knowledge retention</li>
+</ul>
+<h3 id="sft-lora-icl--illusion-of-equivalence-shuttleworth-et-al-2024">"Illusion of Equivalence" (Shuttleworth et al. 2024)</h3>
+<ul>
+<li>Even when LoRA and SFT reach identical target-task accuracy, they learn structurally different solutions</li>
+<li>SFT: small, diffuse changes across all weights</li>
+<li>LoRA: introduces "intruder dimensions" — new high-ranking singular vectors orthogonal to pre-trained weights</li>
+<li>These intruder dimensions are brittle and can cause forgetting too (LoRA isn't immune)</li>
+</ul>
+<h3 id="sft-lora-icl--bert-rediscovers-the-classical-nlp-pipeline-tenney-et-al-2019">"BERT rediscovers the classical NLP pipeline" (Tenney et al. 2019)</h3>
+<ul>
+<li>Found that high-level, task-specific decision rules live in <strong>late layers</strong> of the model</li>
+<li>This is the theoretical basis for why LoRA's concentration in upper layers makes sense — it's updating where the decisions are made</li>
+</ul>
+<h3 id="sft-lora-icl--many-shot-icl-agarwal-et-al-2024">Many-Shot ICL (Agarwal et al. 2024)</h3>
+<ul>
+<li>With very long context, thousands of examples in context can rival SFT</li>
+<li>Also introduced "Reinforced ICL" using self-generated rationales</li>
+<li>This paper deliberately uses fewer shots and no Reinforced ICL — focusing on the data-scarce regime</li>
+</ul>
+<hr />
+<h1 id="part-2-the-paper-in-depth-section-by-section">PART 2: THE PAPER IN DEPTH — Section by Section</h1>
+<hr />
+<h2 id="sft-lora-icl--21-introduction-the-problem-statement">2.1 Introduction — The Problem Statement</h2>
+<p><strong>The core question:</strong> When you need to adapt an LLM for a specific task, and you don't have much data, which method should you use — SFT, LoRA, or ICL?</p>
+<p><strong>Why this matters:</strong><br />
+- Full fine-tuning is expensive and causes forgetting<br />
+- LoRA is cheaper but has its own trade-offs<br />
+- ICL is free but limited<br />
+- No one had done a systematic, controlled comparison in the data-scarce regime</p>
+<p><strong>The paper's four contributions:</strong><br />
+1. Systematic comparison of SFT, LoRA, and ICL in low-data regimes<br />
+2. Assessment of catastrophic forgetting from iterative training on small datasets<br />
+3. Analysis of the trade-off between task accuracy and forgetting as a function of hyperparameters (learning rate, LoRA rank)<br />
+4. <strong>Weight delta (ΔW) analysis</strong> revealing that LoRA's stability comes from modifications to high-level layers established early in training</p>
+<p><strong>Important methodological choice:</strong> They deliberately use <strong>standard/default settings</strong> from common frameworks — no dropout, no early stopping, no hyperparameter optimization. The goal isn't SOTA performance; it's understanding fundamental trade-offs.</p>
+<hr />
+<h2 id="sft-lora-icl--22-experimental-setup">2.2 Experimental Setup</h2>
+<h3 id="sft-lora-icl--model">Model</h3>
+<ul>
+<li>Gemma 3 (4B) — single model for controlled comparison</li>
+</ul>
+<h3 id="sft-lora-icl--data-sizes">Data Sizes</h3>
+<ul>
+<li>Training examples scale logarithmically: 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192</li>
+<li>This "data-scarce" regime is what makes ICL comparable to fine-tuning (you can't put 8192 examples in context, but you can put 128)</li>
+</ul>
+<h3 id="sft-lora-icl--training-settings">Training Settings</h3>
+<ul>
+<li><strong>Batch size:</strong> 8 (small, to accommodate small training sets)</li>
+<li><strong>LoRA learning rate:</strong> 0.005</li>
+<li><strong>SFT learning rate:</strong> 10⁻³ to 10⁻⁴ (they experiment with different rates)</li>
+<li><strong>LoRA rank:</strong> default 4, but also experiment with 1, 8, 16, 32</li>
+<li><strong>Framework:</strong> Kauldron (Google's framework for Gemma models)</li>
+<li><strong>ICL context:</strong> up to 32K tokens</li>
+</ul>
+<h3 id="sft-lora-icl--tasks">Tasks</h3>
+<p><strong>Skill-based</strong> (need to learn a new capability):<br />
+- UPOS, XPOS, FEATS, LEMMA, Head (linguistic/NLP tasks)<br />
+- ANLI (natural language inference)<br />
+- Blocksworld, Logistics (planning)<br />
+- WSC (coreference resolution)</p>
+<p><strong>Knowledge-based</strong> (test existing knowledge):<br />
+- NQ, BoolQ, GPQA, GSM8K</p>
+<h3 id="sft-lora-icl--measuring-forgetting">Measuring Forgetting</h3>
+<ul>
+<li><strong>Reference task: NQ (Natural Questions)</strong></li>
+<li>Before fine-tuning: measure baseline NQ accuracy</li>
+<li>After fine-tuning: measure NQ accuracy again</li>
+<li>If NQ accuracy drops → catastrophic forgetting has occurred</li>
+<li>They also check "instruction following" — does the model still follow instructions for other tasks, or has it become obsessed with the fine-tuning task?</li>
+</ul>
+<hr />
+<h2 id="sft-lora-icl--23-results-in-context-learning-icl">2.3 Results: In-Context Learning (ICL)</h2>
+<h3 id="sft-lora-icl--what-they-found">What they found:</h3>
+<p><strong>Skill tasks — ICL is task-dependent:</strong><br />
+- <strong>UPOS (POS tagging):</strong> ICL works well. Accuracy goes from 83.5% (1 example) to 89.4% (128 examples). The model effectively picks up this skill from context.<br />
+- <strong>Head (syntactic head prediction):</strong> Much harder. Accuracy is low but increases slightly to 9.6% with more examples. The model struggles.<br />
+- <strong>ANLI (adversarial NLI):</strong> Accuracy doesn't improve with more examples — even drops. The model can't learn this from context alone.</p>
+<p><strong>Knowledge tasks — ICL shows only moderate, non-significant improvements:</strong><br />
+- NQ: slight positive trend (model adapting to answer format, not learning new facts)<br />
+- GSM8K: slight positive trend<br />
+- GPQA: actually <em>decreases</em> after 16 samples</p>
+<h3 id="sft-lora-icl--key-takeaway-for-icl">Key takeaway for ICL:</h3>
+<ul>
+<li>ICL is great for <strong>simple skills</strong> that the model almost knows already (like POS tagging)</li>
+<li>ICL <strong>fails</strong> on complex skills (like planning, adversarial reasoning)</li>
+<li>ICL shows <strong>minimal learning</strong> on knowledge tasks — you can't teach a model new facts by putting them in context (the model adapts to format, not content)</li>
+<li><strong>ICL never causes forgetting</strong> (obviously — no weights are changed)</li>
+</ul>
+<hr />
+<h2 id="sft-lora-icl--24-results-supervised-fine-tuning-sft">2.4 Results: Supervised Fine-Tuning (SFT)</h2>
+<h3 id="sft-lora-icl--what-they-found-figure-5">What they found (Figure 5):</h3>
+<p><strong>SFT rapidly learns the skill but catastrophically forgets:</strong><br />
+- Even with 16-256 training samples, the model quickly reaches high accuracy on the target task (UPOS)<br />
+- But within a few training steps, NQ accuracy <strong>drops to 0</strong><br />
+- The model's instruction-following capacity is destroyed — it starts trying to POS-tag <em>every</em> input, even instructions for other tasks</p>
+<p><strong>Learning rate matters but doesn't solve the problem:</strong><br />
+- <strong>LR = 10⁻³ (high):</strong> Fast learning, immediate catastrophic forgetting<br />
+- <strong>LR = 5×10⁻⁴ (medium):</strong> Learning happens, but forgetting is still severe<br />
+- <strong>LR = 10⁻⁴ (low):</strong> Forgetting is reduced, but the model also fails to learn the task effectively</p>
+<p><strong>The fundamental SFT dilemma:</strong> You can't have both. High enough LR to learn → forgetting. Low enough LR to preserve knowledge → no learning.</p>
+<p><strong>Figure 6 — Head prediction task:</strong><br />
+- Training accuracy reaches 100% quickly (even with few samples) — the model memorizes the training data<br />
+- But test accuracy remains near-zero with 16 samples and only reaches ~20% with 1024 samples<br />
+- This shows SFT overfits severely in low-data regimes — it memorizes rather than generalizes</p>
+<h3 id="sft-lora-icl--key-takeaway-for-sft">Key takeaway for SFT:</h3>
+<ul>
+<li>SFT is the <strong>fastest learner</strong> — can acquire skills with as few as 16 examples</li>
+<li>But SFT causes <strong>the most severe forgetting</strong> — NQ goes to zero within steps</li>
+<li>Lowering learning rate doesn't fix it — it just prevents learning while still causing some forgetting</li>
+<li>SFT also <strong>overfits</strong> in low-data regimes (100% train accuracy, near-zero test accuracy)</li>
+</ul>
+<hr />
+<h2 id="sft-lora-icl--25-results-lora">2.5 Results: LoRA</h2>
+<h3 id="sft-lora-icl--what-they-found-2">What they found:</h3>
+<p><strong>LoRA needs more data than SFT to learn (Figure 8):</strong><br />
+- 16 samples: insufficient — LoRA can't learn the task<br />
+- 64+ samples: substantial improvement — LoRA starts working<br />
+- SFT, in contrast, can learn with just 16 samples</p>
+<p><strong>LoRA preserves knowledge better than SFT (Figure 2):</strong><br />
+- While learning UPOS effectively, NQ accuracy stays <strong>stable</strong> (unlike SFT where it crashes to 0)<br />
+- This is the key advantage: LoRA learns the skill AND remembers what it knew</p>
+<p><strong>But LoRA isn't immune to forgetting (Figure 10):</strong><br />
+- With 512+ training samples, NQ accuracy starts declining<br />
+- At 8192 samples and 6000 steps, the validation accuracy peaks but NQ is substantially lower<br />
+- "LoRA forgets too when more training samples are provided"<br />
+- Forgetting starts around 400 training steps with large datasets</p>
+<p><strong>LoRA rank matters (Figure 7, Figure 9):</strong><br />
+- Higher rank (r=16, r=32) → faster convergence (leftward shift in learning curves)<br />
+- Rank 4 and 16: reach peak accuracy (~82.5-83.3%) by step 800<br />
+- Rank 1: reaches 83.4% but needs 3000 steps (much slower)<br />
+- Diminishing returns for r &gt; 8 with 128 samples<br />
+- Both sufficient capacity (rank) AND sufficient data are necessary</p>
+<p><strong>Instructions at test time help (Figure 11):</strong><br />
+- When the model is trained with few samples (e.g., 8), providing task instructions at test time significantly improves performance<br />
+- With more training data, the model internalizes the task and instructions matter less<br />
+- But after extensive training (6000+ steps), instruction-following degrades — "a form of forgetting even with LoRA"</p>
+<h3 id="sft-lora-icl--key-takeaway-for-lora">Key takeaway for LoRA:</h3>
+<ul>
+<li>LoRA is the <strong>balanced approach</strong> — learns skills while preserving knowledge</li>
+<li>But needs a <strong>critical mass of data</strong> (fails with &lt;32 samples, works from ~64+)</li>
+<li>LoRA CAN forget with too much training (large datasets + many steps)</li>
+<li>Higher rank = faster learning but more capacity for disruption</li>
+<li><strong>The sweet spot:</strong> moderate data (64-256 samples) + moderate rank (4-8) + not too many steps</li>
+</ul>
+<hr />
+<h2 id="sft-lora-icl--26-the-weight-delta-δw-analysis-the-papers-crown-jewel">2.6 The Weight Delta (ΔW) Analysis — The Paper's Crown Jewel</h2>
+<p>This is the most novel and interesting contribution. Let me break it down carefully.</p>
+<h3 id="sft-lora-icl--what-they-did">What They Did</h3>
+<p>They compared the fine-tuned model's weights to the original pre-trained model's weights, layer by layer, to see WHERE the changes happen. They created heatmaps for:<br />
+- LoRA (Figure 12) and SFT (Figure 13)<br />
+- Attention weights (top row) and MLP weights (bottom row)<br />
+- At different training steps: 800, 1600, 3000<br />
+- For different training set sizes: 32, 64, 128, 256 samples</p>
+<h3 id="sft-lora-icl--finding-1-lora-updates-are-highly-layer-specific">Finding 1: LoRA Updates are Highly Layer-Specific</h3>
+<p><strong>The changes are NOT uniform across the model. They're heavily concentrated in upper layers (layers 20-31).</strong></p>
+<ul>
+<li><strong>Layers 20-31 (upper):</strong> High-magnitude updates (green to yellow on heatmap) — this is where the action is</li>
+<li><strong>Layers 0-8 (lower):</strong> Extremely small updates (dark blue/purple) — essentially untouched</li>
+<li><strong>Isolated hotspots:</strong> A band of higher activity around layer 13 and another around layer 24</li>
+</ul>
+<p><strong>Why does this happen? The paper offers a hypothesis:</strong><br />
+1. <strong>High-level decision rules live in late layers</strong> (Tenney et al. 2019 — "BERT rediscovers the classical NLP pipeline"). So updating late layers directly affects the model's task-specific decisions.<br />
+2. <strong>Cross-entropy loss gradients diminish with depth during backpropagation.</strong> Early layers get smaller gradients.<br />
+3. <strong>RMSNorm further attenuates gradients</strong> in early blocks.<br />
+4. <strong>Residual connections might mitigate this</strong> in Gemma (but the effect still holds).<br />
+5. <strong>Early layers encode reusable features</strong> (lexical, orthographic) that are already sufficient for the task — changing them offers little gain and high risk.<br />
+6. <strong>Attention vs. MLP:</strong> Attention layers adjust <em>routing/aggregation</em> (where information flows), while MLPs adjust <em>feature re-weighting</em> (what information means). The majority of changes in both LoRA and SFT occur in attention weights.</p>
+<p><strong>Why this explains LoRA's stability:</strong> Since LoRA only modifies upper layers (high-level decisions) and leaves lower layers (foundational features) untouched, the model's general capabilities — which depend on those lower layers — are preserved. It's like modifying the top of a building without touching the foundation.</p>
+<h3 id="sft-lora-icl--finding-2-rapid-convergence-of-the-update-pattern">Finding 2: Rapid Convergence of the Update Pattern</h3>
+<p><strong>The pattern of WHICH layers are updated is established by step 800 and remains remarkably stable through step 3000.</strong></p>
+<ul>
+<li>The hotspots at layers 13, 24, and 28-31 are already visible at step 800</li>
+<li>By steps 1600 and 3000, the pattern doesn't fundamentally change</li>
+<li>Some magnitudes intensify slightly (layers 20-27 get a bit greener), but the <em>distribution</em> of where changes happen is fixed</li>
+</ul>
+<p><strong>Why this matters:</strong> It means LoRA finds its "adaptation direction" very quickly and sticks with it. The model doesn't gradually spread changes to new layers — it commits early to a specific set of layers and only intensifies within those. This is why early stopping might not help much — the pattern is already set.</p>
+<h3 id="sft-lora-icl--finding-3-module-specific-updates">Finding 3: Module-Specific Updates</h3>
+<p>Within the active layers, updates are also not uniform across the training-data axis:<br />
+- The hotspot at layer 13 is almost exclusively in the first column (32 samples)<br />
+- At layer 24, the largest updates are in the first two columns (32 and 64 samples)</p>
+<p>This suggests that different layers become active depending on how much data you have — with very few examples, only the most "sensitive" layers respond.</p>
+<h3 id="sft-lora-icl--finding-4-sft-changes-are-10x-larger">Finding 4: SFT Changes are 10x Larger</h3>
+<p><strong>For comparison (Figure 13):</strong><br />
+- SFT's weight changes are <strong>more than an order of magnitude larger</strong> than LoRA's<br />
+- The LoRA heatmap scale maxes out at ~0.3 for the L1-Norm<br />
+- SFT's changes are 10x+ that scale<br />
+- Similar to LoRA, the majority of SFT changes also occur in attention weights (not MLP)<br />
+- But unlike LoRA, SFT's changes are more spread across layers — it touches everything, just with varying intensity</p>
+<p><strong>Why this explains SFT's forgetting:</strong> SFT makes massive, diffuse changes across all layers. Even if upper layers get the most changes, the changes to lower layers are still large enough to overwrite the foundational features that other tasks depend on. It's like renovating every floor of a building — the foundation gets damaged even if the top floors get the most work.</p>
+<hr />
+<h2 id="sft-lora-icl--27-conclusions-the-practical-framework">2.7 Conclusions — The Practical Framework</h2>
+<p>The paper provides a clear decision framework:</p>
+<div class="codehilite"><pre><span></span><code>┌─────────────────────────────────────────────────────────┐
+│           WHICH ADAPTATION METHOD TO USE?                │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  Is the task a SKILL (new capability)?                  │
+│  ├─ YES, and data is extremely limited (&lt;32 examples)   │
+│  │  → SFT (but use caution — expect forgetting)         │
+│  ├─ YES, and data is moderate (64+ examples)            │
+│  │  → LoRA (best balance of learning + retention)       │
+│  └─ YES, and the skill is simple (model almost knows it) │
+│     → Try ICL first (free, no forgetting)                │
+│                                                         │
+│  Is the task KNOWLEDGE (factual information)?            │
+│  ├─ YES → ICL (put facts in context)                     │
+│  │        Fine-tuning is poor for knowledge injection    │
+│  │        and risks erasing existing knowledge           │
+│                                                         │
+│  Is knowledge retention critical?                        │
+│  ├─ YES → LoRA (minimizes forgetting)                    │
+│  └─ NO, just maximize target task accuracy              │
+│     → SFT (highest peak performance)                    │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+</code></pre></div>
+
+<p><strong>The three key takeaways:</strong><br />
+1. <strong>There is no single best method</strong> — it depends on the task type (skill vs. knowledge), data availability, and whether forgetting is a concern<br />
+2. <strong>LoRA is the best general-purpose choice</strong> when you have moderate data and care about retaining the model's general capabilities<br />
+3. <strong>The skill vs. knowledge distinction is critical</strong> — skills need fine-tuning (SFT/LoRA), knowledge needs ICL or RAG</p>
+<hr />
+<h1 id="part-3-talking-points-for-your-meeting-with-sherry-moore">PART 3: TALKING POINTS FOR YOUR MEETING WITH SHERRY MOORE</h1>
+<p>Here are specific, well-informed questions and discussion points you can bring up. Each one shows you've read and understood the paper.</p>
+<hr />
+<h2 id="sft-lora-icl--31-questions-that-show-deep-understanding">3.1 Questions That Show Deep Understanding</h2>
+<h3 id="sft-lora-icl--q1-the-δw-layer-localization-finding">Q1: The ΔW Layer-Localization Finding</h3>
+<p>"I found the weight delta analysis really interesting — the finding that LoRA updates concentrate in upper layers (20-31) and the pattern is established by step 800. Do you think this layer-localization is a property of the low-rank constraint specifically, or would it hold for other PEFT methods like adapters or prefix tuning? And does the concentration shift for different task types?"</p>
+<h3 id="sft-lora-icl--q2-extension-to-speechmultimodal-models">Q2: Extension to Speech/Multimodal Models</h3>
+<p>"The paper uses Gemma 3 4B on text tasks. I work with speech models (Whisper fine-tuning) and multimodal models. Do you think the SFT/LoRA/ICL trade-offs would look different for speech models, where the lower layers might encode acoustic features rather than lexical ones? Would the ΔW layer-localization pattern shift?"</p>
+<h3 id="sft-lora-icl--q3-lora-forgetting-with-large-data">Q3: LoRA Forgetting with Large Data</h3>
+<p>"Figure 10 shows that LoRA does forget when given enough training data (8192 samples, 6000 steps) — NQ accuracy drops substantially. This suggests LoRA's forgetting prevention isn't free — it's just deferred. At what point does LoRA's forgetting profile start looking like SFT's? Is there a data/steps threshold where you'd switch from LoRA to SFT?"</p>
+<h3 id="sft-lora-icl--q4-the-skill-vs-knowledge-framework">Q4: The Skill vs. Knowledge Framework</h3>
+<p>"The skill vs. knowledge distinction is really clean in the paper. But what about tasks that are a mix of both — like math (GSM8K), where you need both procedural skill and factual knowledge? Did you see any tasks where this distinction broke down?"</p>
+<h3 id="sft-lora-icl--q5-connection-to-her-robotics-work">Q5: Connection to Her Robotics Work</h3>
+<p>"In your robotics work with RT-X, you're training generalist robot policies across embodiments. Do VLA (Vision-Language-Action) models face similar adaptation/forgetting trade-offs? If you fine-tune a VLA model for a new robot, do you see catastrophic forgetting of skills for other robots? Is the SFT/LoRA/ICL framework applicable there?"</p>
+<h3 id="sft-lora-icl--q6-the-intruder-dimensions-connection">Q6: The "Intruder Dimensions" Connection</h3>
+<p>"Shuttleworth et al. found that LoRA introduces 'intruder dimensions' — new singular vectors orthogonal to pre-trained weights. Your ΔW analysis shows LoRA concentrates in upper layers. Do you see a connection? Are the intruder dimensions specifically in the upper-layer weight matrices?"</p>
+<h3 id="sft-lora-icl--q7-pre-training-decisions-and-adaptation">Q7: Pre-training Decisions and Adaptation</h3>
+<p>"I've done from-scratch pre-training of a small LLaMA model. The paper's findings suggest that pre-training decisions (architecture, depth, normalization) affect which layers are modified during adaptation. For example, RMSNorm attenuates gradients in early blocks. Have you looked at whether different normalization schemes or architectures change the ΔW pattern?"</p>
+<hr />
+<h2 id="sft-lora-icl--32-sharing-your-own-work-natural-conversation-bridges">3.2 Sharing Your Own Work (Natural Conversation Bridges)</h2>
+<h3 id="sft-lora-icl--bridge-1-from-smol-llama-pre-training-and-adaptation">Bridge 1: From smol-llama → Pre-training and Adaptation</h3>
+<p>"I trained a 360M LLaMA from scratch — GQA, RoPE, RMSNorm, SwiGLU, the whole stack. Your paper's finding about RMSNorm attenuating gradients in early layers during adaptation makes me wonder if my architectural choices affect how well the model can be fine-tuned later. Have you looked at how pre-training architecture choices affect adaptation quality?"</p>
+<h3 id="sft-lora-icl--bridge-2-from-vicharak-llam-deployment-and-efficiency">Bridge 2: From vicharak-llam → Deployment and Efficiency</h3>
+<p>"I trained a 213K-param LLM in JAX and deployed it as C firmware on a microcontroller with 264KB SRAM. LoRA's efficiency story resonates with my work — when you're that constrained, the idea of adding just 0.2% extra parameters for adaptation is very appealing. Did you consider on-device adaptation scenarios in this work?"</p>
+<h3 id="sft-lora-icl--bridge-3-from-pasketti-speech-model-fine-tuning">Bridge 3: From pasketti → Speech Model Fine-Tuning</h3>
+<p>"I fine-tuned Whisper for children's speech ASR using LoRA and QLoRA. One thing I noticed is that LoRA seemed to preserve the model's ability to handle adult speech well, which aligns with your finding about LoRA preserving general knowledge. But I was working with a much smaller training set. Do you think the 64-sample threshold for LoRA effectiveness changes with model size or modality?"</p>
+<h3 id="sft-lora-icl--bridge-4-from-gemma-fork-direct-connection">Bridge 4: From Gemma fork → Direct Connection</h3>
+<p>"I've been exploring the Gemma JAX library for fine-tuning experiments. Your paper uses Kauldron — how does that compare to the public Gemma JAX library? Are there findings from this paper that might influence how the public Gemma fine-tuning tools are designed?"</p>
+<hr />
+<h2 id="sft-lora-icl--33-quick-reference-cheat-sheet">3.3 Quick-Reference Cheat Sheet</h2>
+<p>If you need to recall the paper's findings quickly:</p>
+<div class="codehilite"><pre><span></span><code>SFT:  Learns fast (16 examples) → Forgets catastrophically (NQ→0 in steps)
+      High LR = learn + forget | Low LR = don&#39;t learn + still forget
+      Weight changes: 10x larger than LoRA, more diffuse across layers
+
+LoRA: Needs 64+ examples → Learns well + Preserves knowledge
+      Higher rank = faster learning, diminishing returns past r=8
+      Weight changes: concentrated in upper layers (20-31), stable from step 800
+      CAN forget with large data (8192 samples, 6000+ steps)
+
+ICL:  Never forgets (no weight updates)
+      Good for: simple skills (POS tagging), knowledge injection (facts in context)
+      Bad for: complex skills (planning, adversarial reasoning)
+      Knowledge tasks: minimal real improvement (just format adaptation)
+
+SKILL vs KNOWLEDGE:
+      Skills → need SFT or LoRA (changing how model processes input)
+      Knowledge → use ICL or RAG (put facts in context)
+      Fine-tuning is bad for knowledge injection (risks erasing existing knowledge)
+
+DECISION FRAMEWORK:
+      Extremely limited data + new skill → SFT (with caution)
+      Moderate data + retention paramount → LoRA (best balance)
+      Demonstrating existing capabilities → ICL (safest)
+</code></pre></div>
+
+<hr />
+<h1 id="part-4-glossary-of-terms">PART 4: GLOSSARY OF TERMS</h1>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>SFT</strong></td>
+<td>Supervised Fine-Tuning — updating all model weights on labeled data</td>
+</tr>
+<tr>
+<td><strong>LoRA</strong></td>
+<td>Low-Rank Adaptation — freezing weights, adding small trainable low-rank matrices</td>
+</tr>
+<tr>
+<td><strong>ICL</strong></td>
+<td>In-Context Learning — putting examples in the prompt, no weight updates</td>
+</tr>
+<tr>
+<td><strong>PEFT</strong></td>
+<td>Parameter-Efficient Fine-Tuning — umbrella term for methods like LoRA</td>
+</tr>
+<tr>
+<td><strong>ΔW</strong></td>
+<td>Weight delta — difference between fine-tuned and original weights</td>
+</tr>
+<tr>
+<td><strong>Catastrophic forgetting</strong></td>
+<td>Model learns new task but forgets previously known capabilities</td>
+</tr>
+<tr>
+<td><strong>Rank (r)</strong></td>
+<td>LoRA's key hyperparameter — controls size of trainable matrices</td>
+</tr>
+<tr>
+<td><strong>NQ</strong></td>
+<td>Natural Questions — used as the reference task to measure forgetting</td>
+</tr>
+<tr>
+<td><strong>Gemma 3</strong></td>
+<td>Google's open-weights LLM, 4B parameter version used in this paper</td>
+</tr>
+<tr>
+<td><strong>Kauldron</strong></td>
+<td>Google's framework for training Gemma models</td>
+</tr>
+<tr>
+<td><strong>UPOS</strong></td>
+<td>Universal Part-of-Speech tagging — a skill task in the paper</td>
+</tr>
+<tr>
+<td><strong>Blocksworld</strong></td>
+<td>A planning task — rearranging blocks into a goal configuration</td>
+</tr>
+<tr>
+<td><strong>RMSNorm</strong></td>
+<td>Root Mean Square Normalization — normalizes activations, attenuates gradients in early layers</td>
+</tr>
+<tr>
+<td><strong>GQA</strong></td>
+<td>Grouped Query Attention — attention mechanism in modern transformers</td>
+</tr>
+<tr>
+<td><strong>Intruder dimensions</strong></td>
+<td>New singular vectors LoRA introduces, orthogonal to pre-trained weights (from Shuttleworth et al.)</td>
+</tr>
+<tr>
+<td><strong>Pareto curve</strong></td>
+<td>The trade-off frontier between target-task performance and knowledge retention</td>
+</tr>
+<tr>
+<td><strong>PDDL</strong></td>
+<td>Planning Domain Definition Language — formalism used for Blocksworld/Logistics tasks</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><em>Prepared Aug 12, 2026. Paper: arXiv:2511.00130, Bohnet et al., Google DeepMind, Oct 2025.</em></p></div></section><section class="section section-block" id="meeting-story"><div class="collapse-trigger"><div class="section-header"><span class="section-icon">🎭</span><div><div class="section-title">Meeting Story Guide</div><div class="section-desc">How to navigate the 30-minute meeting</div></div></div><span class="collapse-arrow">▾</span></div><div class="section-body"><h1 id="the-30-minute-story-how-michu-should-navigate-her-first-meeting-with-sherry-moore">🎭 The 30-Minute Story: How Michu Should Navigate Her First Meeting with Sherry Moore</h1>
+<hr />
+<h2 id="meeting-story--the-big-picture-what-this-meeting-actually-is">The Big Picture: What This Meeting Actually Is</h2>
+<p>This is NOT a technical discussion. This is a <strong>first date for a mentorship relationship</strong>.</p>
+<p>Think of it like this: Sherry is someone who could change the trajectory of Michu's career. She's a Senior Staff SWE who co-built TensorFlow, pivoted from kernel engineering to ML, AND is a certified coach who literally runs mentorship programs. She's the ideal mentor.</p>
+<p>But Sherry is extremely busy. You won't get weekly 1:1s. You might not even get a follow-up for weeks. So this 30 minutes has one job:</p>
+<blockquote>
+<p><strong>Make Sherry remember Michu as someone worth investing in — and give Sherry a reason to want to stay in touch.</strong></p>
+</blockquote>
+<p>The technical depth (the SFT/LoRA/ICL guide, the research dossier) is your <strong>ammunition for later</strong> — when you do get a follow-up, or when you email her a thoughtful question. Today is about <strong>being interesting, being genuine, and being easy to mentor.</strong></p>
+<hr />
+<h2 id="meeting-story--the-mindset-shift">The Mindset Shift</h2>
+<p>❌ <strong>Wrong frame:</strong> "I need to impress Sherry with how much I know about her paper"</p>
+<p>✅ <strong>Right frame:</strong> "I need Sherry to walk away thinking 'this person is doing really cool things, reminds me of why I got into this field, and I'd want to help them'"</p>
+<p>Senior people at Google have met hundreds of junior engineers who try to impress them with knowledge. What actually makes them remember someone is:</p>
+<ol>
+<li><strong>Genuine enthusiasm</strong> — not performed, but real passion for the work</li>
+<li><strong>Interesting projects</strong> — things they haven't seen before</li>
+<li><strong>Self-awareness</strong> — knowing what you don't know, asking good questions</li>
+<li><strong>A natural connection</strong> — shared values, shared interests, shared story</li>
+</ol>
+<hr />
+<h2 id="meeting-story--the-narrative-arc-not-a-script-a-story-to-tell">The Narrative Arc (Not a Script — a Story to Tell)</h2>
+<p>Think of the 30 minutes as having <strong>four acts</strong>. Each one flows naturally into the next. You're not checking boxes — you're telling the story of who you are and why you're here.</p>
+<hr />
+<h3 id="meeting-story--act-1-the-introduction-05-min">ACT 1: The Introduction (0–5 min)</h3>
+<h4 id="who-i-am-and-how-i-got-here">"Who I am and how I got here"</h4>
+<p><strong>The goal:</strong> Be a real person, not a resume. Give Sherry enough context to understand you, but keep it warm and personal.</p>
+<p><strong>How to open:</strong><br />
+- Thank her for the time. She's busy. Acknowledge it genuinely.<br />
+- Quick intro: "I'm Michu, I joined Google about 5 months ago — I'm a noogler, still finding my feet."<br />
+- Where you came from: "I did my undergrad at IIT Madras — dual degree in Stats and Data Science. I've been obsessed with ML systems for a while now."</p>
+<p><strong>The personal hook — make it human:</strong><br />
+- Share WHY you got into ML. Not "I'm interested in LLM pre-training" — that's a buzzword. Instead:<br />
+  - "I got into this because I wanted to understand how these models actually work from the ground up — not just call an API. That's why I ended up training a small LLaMA from scratch, just to see if I could."<br />
+  - Or: "I've always been drawn to the systems side of ML — how do you actually run these models efficiently? That led me down some weird paths, like trying to run a tiny language model on a microcontroller."</p>
+<p><strong>Keep it conversational, not a monologue.</strong> Let her react. If she asks a question, follow it. If she shares something about herself, listen and engage.</p>
+<hr />
+<h3 id="meeting-story--act-2-the-work-515-min">ACT 2: The Work (5–15 min)</h3>
+<h4 id="heres-what-i-do-and-its-genuinely-interesting">"Here's what I do — and it's genuinely interesting"</h4>
+<p><strong>The goal:</strong> Show, don't tell. Let your projects be the proof that you're someone worth mentoring. But frame them as things you were curious about, not achievements you're listing.</p>
+<p><strong>The natural way to bring up your projects:</strong></p>
+<p><strong>smol-llama:</strong></p>
+<blockquote>
+<p>"One thing I did recently — I wanted to understand pre-training end to end, so I trained a 360M LLaMA from scratch. Nothing fancy, just a small model, but I did the whole thing: custom tokenizer, training loop, everything. Ran it on a single H100 for about $53. It was more about learning than the model itself."</p>
+</blockquote>
+<p><strong>Why this works:</strong> It's humble ("nothing fancy"), shows initiative ("I wanted to understand"), and is concrete ("$53 on one H100"). It invites Sherry to ask questions without feeling like she's being quizzed.</p>
+<p><strong>vicharak-llam (your secret weapon):</strong></p>
+<blockquote>
+<p>"The weirdest thing I did recently — I took a tiny LLM, like 213K parameters, trained it in JAX, and then exported it to run as C firmware on a microcontroller. The chip has 264KB of SRAM. I had to figure out how to fit weights into flash and run inference by reading them over a serial interface. It was a fun exercise in how far you can push inference to the edge."</p>
+</blockquote>
+<p><strong>Why this is your best conversation starter:</strong> Sherry spent 14 years doing low-level systems work (Solaris kernel, firmware, hardware bring-up) before pivoting to ML. A story about running an LLM on a microcontroller is EXACTLY the kind of systems-meets-ML project that would resonate with her. She might even get excited about it.</p>
+<p><strong>pasketti (speech/ASR):</strong></p>
+<blockquote>
+<p>"I also did some work on ASR — fine-tuning Whisper for children's speech. That was a DrivenData competition. I used LoRA for the fine-tuning, and I noticed something interesting — the model seemed to retain its ability to handle adult speech even after fine-tuning on kids' speech. I didn't fully understand why at the time, but it stuck with me."</p>
+</blockquote>
+<p><strong>Why this is a setup move:</strong> You're planting a seed here. "LoRA preserved the model's general ability" — this is literally what Sherry's paper is about. But you're not saying "I read your paper." You're saying "I noticed this thing in my own work." When the paper comes up later (Act 3), the connection will feel organic.</p>
+<p><strong>Important:</strong> Don't list all three back to back. Bring up one, let Sherry react, and let the conversation flow. If she's interested in vicharak-llam, go deep on that. If she asks about smol-llama, talk about that. <strong>Follow her lead.</strong></p>
+<hr />
+<h3 id="meeting-story--act-3-the-connection-1523-min">ACT 3: The Connection (15–23 min)</h3>
+<h4 id="i-found-your-work-and-it-resonated-with-what-ive-been-seeing">"I found your work and it resonated with what I've been seeing"</h4>
+<p><strong>The goal:</strong> Bridge from YOUR work to HERS, naturally. This is where the paper comes up — but not as "I studied your paper." As "I noticed something in my work, and then I found your paper and it explained it."</p>
+<p><strong>The natural bridge:</strong></p>
+<blockquote>
+<p>"Actually, one thing I noticed when I was doing the Whisper fine-tuning — I used LoRA, and it seemed to preserve the model's general capabilities. I didn't think much of it at the time, but I recently came across a paper you co-authored — the one comparing SFT, LoRA, and ICL on Gemma 3. And it was really validating to see that systematic study of what I'd been intuitively doing."</p>
+</blockquote>
+<p><strong>Then — and this is key — share ONE genuine observation, not a laundry list of questions:</strong></p>
+<blockquote>
+<p>"The thing that really struck me was the weight delta analysis — how LoRA's changes concentrate in the upper layers. That made me wonder whether that would hold for speech models too, since the lower layers in a speech model are doing something very different from a text model."</p>
+</blockquote>
+<p><strong>Why this works:</strong><br />
+1. You're not claiming expertise — you're sharing a genuine curiosity<br />
+2. It connects your work (pasketti/Whisper) to her work (the paper)<br />
+3. It's a real question, not a rehearsed one<br />
+4. It shows you actually read and understood the paper, without performing that understanding</p>
+<p><strong>If she engages:</strong> Great — let the conversation go where she takes it. She might talk about speech models, or she might pivot to robotics, or she might share something about the paper that's not in it.</p>
+<p><strong>If she goes a different direction:</strong> That's fine. Follow her. The paper is a tool, not a requirement. If she'd rather talk about TensorFlow, or her career pivot, or robotics, or coaching — go there. The goal is connection, not coverage.</p>
+<p><strong>Other natural bridges that might come up:</strong></p>
+<p>If she talks about her career pivot (Solaris → ML):</p>
+<blockquote>
+<p>"That actually really resonates with me. I trained an LLM and then deployed it as bare C code on a microcontroller — I feel like I'm going in the opposite direction you did. You went from systems to ML, and I'm trying to bring ML back to systems."</p>
+</blockquote>
+<p>If she talks about robotics/RT-X:</p>
+<blockquote>
+<p>"I've been getting interested in multimodal models — adding vision to small models, things like that. Do you see VLA models going through the same adaptation challenges you found in the paper?"</p>
+</blockquote>
+<p>If she mentions coaching or mentorship:</p>
+<blockquote>
+<p>"That's actually one of the reasons I was excited to meet you. I'm still very new at Google and I'm trying to figure out how to navigate the systems and ML space. I'd love to hear how you think about mentorship and career development."</p>
+</blockquote>
+<hr />
+<h3 id="meeting-story--act-4-the-ask-2328-min">ACT 4: The Ask (23–28 min)</h3>
+<h4 id="id-like-to-stay-in-touch-heres-how-you-can-reach-me">"I'd like to stay in touch — here's how you can reach me"</h4>
+<p><strong>The goal:</strong> Plant the seed for long-term connection WITHOUT being pushy. You're not asking for weekly meetings. You're asking for permission to reach out occasionally.</p>
+<p><strong>The ask should be low-pressure and specific:</strong></p>
+<blockquote>
+<p>"I know you're incredibly busy, so I don't want to be presumptuous about your time. But I'd really love to stay in touch — even if it's just an occasional email. I'm working on some projects in the LLM training and deployment space, and having someone with your systems background to bounce ideas off of occasionally would be really valuable."</p>
+</blockquote>
+<p><strong>Even better — give her a reason to WANT to hear from you:</strong></p>
+<blockquote>
+<p>"I'm actually working on something right now that I think you'd find interesting — I'm exploring how to add vision capabilities to small language models. When I have something concrete, could I send you a short write-up? Even if you don't have time to respond, I'd love to share it with you."</p>
+</blockquote>
+<p><strong>Why this works:</strong><br />
+1. It's low-commitment ("even if you don't have time to respond")<br />
+2. It's specific ("a short write-up" not "let's schedule a meeting")<br />
+3. It gives her a reason to say yes (she might actually be curious)<br />
+4. It respects her time</p>
+<p><strong>If she offers more — take it gratefully but don't push:</strong><br />
+- If she says "let's do a follow-up in a few weeks" → "That would be amazing, thank you."<br />
+- If she says "just email me anytime" → "I'd love that, thank you. I'll keep it to occasional, thoughtful things — not spam."<br />
+- If she says "come to my office hours" (if she has them) → "Absolutely, I'll be there."</p>
+<hr />
+<h3 id="meeting-story--the-close-2830-min">The Close (28–30 min)</h3>
+<h4 id="thank-you-genuinely">"Thank you, genuinely"</h4>
+<blockquote>
+<p>"Thank you so much for taking the time to meet with me, Sherry. I know how packed your schedule must be. This was really encouraging for me — I've been figuring out a lot of this on my own, and it means a lot to have someone with your perspective take an interest."</p>
+</blockquote>
+<p>Keep it short, warm, and genuine. Don't add caveats or qualifiers. Just mean it.</p>
+<hr />
+<h2 id="meeting-story--what-not-to-do">What NOT To Do</h2>
+<p>❌ <strong>Don't start with the paper.</strong> "I read your SFT/LoRA/ICL paper" as an opener is like going on a first date and saying "I read your LinkedIn." It's too much, too fast.</p>
+<p>❌ <strong>Don't list your projects as a portfolio.</strong> "I did smol-llama, then vicharak-llam, then pasketti, then sign-gen..." That's a resume, not a conversation.</p>
+<p>❌ <strong>Don't ask rapid-fire questions.</strong> One good question is worth more than five rehearsed ones. Let the conversation breathe.</p>
+<p>❌ <strong>Don't try to show you know everything.</strong> If Sherry mentions something you don't know, say "I don't know much about that — could you tell me more?" That's more impressive than pretending.</p>
+<p>❌ <strong>Don't be afraid of silence.</strong> If there's a pause, let it breathe. Sherry might be thinking about something to share. Don't rush to fill every gap.</p>
+<p>❌ <strong>Don't over-rehearse.</strong> This guide is a compass, not a script. If the conversation goes somewhere unexpected, follow it. The best conversations are the ones that go off-script.</p>
+<p>❌ <strong>Don't ask for too much.</strong> "Can we meet monthly?" is too much for a first meeting. "Can I email you occasionally?" is reasonable.</p>
+<p>❌ <strong>Don't forget — she's a coach.</strong> Sherry is literally a certified professional coach. She WANTS to help people. You're not imposing by being genuine about wanting mentorship. You're giving her the opportunity to do what she loves.</p>
+<hr />
+<h2 id="meeting-story--after-the-meeting-the-follow-up-strategy">After the Meeting: The Follow-Up Strategy</h2>
+<h3 id="meeting-story--within-24-hours-aug-13-evening">Within 24 hours (Aug 13 evening):</h3>
+<p>Send a short, warm email:</p>
+<blockquote>
+<p>Hi Sherry,</p>
+<p>Thank you so much for taking the time to meet with me today. I really enjoyed our conversation — especially hearing about [specific thing she mentioned that you found genuinely interesting].</p>
+<p>I'm working on [current project] and I'll share something concrete when I have it. No rush to respond — I just wanted to make sure you knew how much I appreciated your time.</p>
+<p>Best,<br />
+Michu</p>
+</blockquote>
+<h3 id="meeting-story--in-23-weeks-when-you-have-something-concrete">In 2–3 weeks (when you have something concrete):</h3>
+<p>Send the thing you promised — a short write-up, a demo, a finding from your work:</p>
+<blockquote>
+<p>Hi Sherry,</p>
+<p>I mentioned I was working on [X]. Here's a short write-up of what I've been finding — [2-3 paragraphs, not a thesis]. I thought you might find it interesting given our conversation about [Y].</p>
+<p>Would love your thoughts whenever you have a moment — no rush at all.</p>
+<p>Best,<br />
+Michu</p>
+</blockquote>
+<h3 id="meeting-story--the-cadence">The cadence:</h3>
+<ul>
+<li>Don't email more than once every 2-4 weeks</li>
+<li>Always have something concrete to share (not just "checking in")</li>
+<li>Always make it easy to ignore (no guilt, no pressure)</li>
+<li>When she does respond, respond thoughtfully but don't over-respond</li>
+</ul>
+<hr />
+<h2 id="meeting-story--the-one-sentence-summary">The One-Sentence Summary</h2>
+<blockquote>
+<p><strong>Michu's job in this meeting is not to prove she's smart — it's to prove she's worth mentoring: someone genuinely curious, doing interesting work, easy to talk to, and respectful of Sherry's time.</strong></p>
+</blockquote>
+<p>The technical prep (the deep-dive guide, the research dossier) matters — but not for this meeting. It matters for the follow-up, for the second conversation, for the moment when Sherry says "tell me more about that." That's when you deploy it.</p>
+<p>Today, just be Michu — the noogler who trained an LLM from scratch, ran one on a microcontroller, fine-tuned Whisper for kids' speech, and is genuinely excited to learn from someone who's been doing systems-meets-ML since before Michu was born.</p>
+<hr />
+<p><em>Prepared Aug 12, 2026.</em></p></div></section>
+    </div>
+    <footer class="footer">
+      Meeting Prep · Sherry Moore · Google DeepMind · Aug 13, 2026<br>
+      Compiled Aug 12, 2026 · Self-contained static page
+    </footer>
+  </div>
+</div>
+<button class="back-top" aria-label="Back to top">↑</button>
+<script>
+(function(){
+  // Mobile sidebar toggle
+  var sidebar = document.querySelector('.sidebar');
+  var overlay = document.querySelector('.overlay');
+  var menuBtn = document.querySelector('.menu-btn');
+  function openSidebar(){ sidebar.classList.add('open'); overlay.classList.add('show'); }
+  function closeSidebar(){ sidebar.classList.remove('open'); overlay.classList.remove('show'); }
+  if(menuBtn) menuBtn.addEventListener('click', openSidebar);
+  if(overlay) overlay.addEventListener('click', closeSidebar);
+
+  // Collapsible nav sublists
+  document.querySelectorAll('.nav-toggle').forEach(function(btn){
+    var target = document.getElementById(btn.dataset.target);
+    var collapsed = false;
+    btn.addEventListener('click', function(){
+      collapsed = !collapsed;
+      if(target) target.classList.toggle('collapsed', collapsed);
+      btn.textContent = collapsed ? '▸' : '▾';
+    });
+  });
+
+  // Collapsible sections
+  document.querySelectorAll('.collapse-trigger').forEach(function(trig){
+    trig.addEventListener('click', function(){
+      var body = trig.nextElementSibling;
+      var collapsed = trig.classList.toggle('collapsed');
+      if(body) body.classList.toggle('collapsed', collapsed);
+    });
+  });
+
+  // Back to top
+  var backTop = document.querySelector('.back-top');
+  window.addEventListener('scroll', function(){
+    if(backTop) backTop.classList.toggle('show', window.scrollY > 600);
+  });
+  if(backTop) backTop.addEventListener('click', function(){ window.scrollTo({top:0,behavior:'smooth'}); });
+
+  // Active section highlighting in sidebar
+  var sectionLinks = document.querySelectorAll('.nav-section-link');
+  var sections = [];
+  document.querySelectorAll('.section-block').forEach(function(s){
+    sections.push({ id: s.id, el: s });
+  });
+  if('IntersectionObserver' in window){
+    var observer = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){
+          var id = entry.target.id;
+          sectionLinks.forEach(function(l){ l.classList.toggle('active', l.dataset.section === id); });
+        }
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+    sections.forEach(function(s){ observer.observe(s.el); });
+  }
+
+  // Active sub-nav highlight
+  var subLinks = document.querySelectorAll('.nav-sublist a');
+  var headings = [];
+  subLinks.forEach(function(a){
+    var el = document.getElementById(a.getAttribute('href').slice(1));
+    if(el) headings.push({ link: a, el: el });
+  });
+  if('IntersectionObserver' in window && headings.length){
+    var hObs = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){
+          headings.forEach(function(h){ h.link.classList.toggle('active', h.el === entry.target); });
+        }
+      });
+    }, { rootMargin: '-15% 0px -80% 0px' });
+    headings.forEach(function(h){ hObs.observe(h.el); });
+  }
+})();
+</script>
+</body>
+</html>
